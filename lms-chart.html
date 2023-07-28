@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html">
+
+<head>
+    <meta http-equiv='content-type' content='text/html, charset=UTF-8' />
+    <meta name="viewport" content="initial-scale=1, width=device-width" />
+    <script src="lms-chart.js"></script>
+</head>
+
+<body>
+    <template id="lms-chart-template">
+        <style>
+            foreignObject {
+                overflow: visible;
+            }
+            .grid {
+                fill: none;
+                stroke: grey;
+                stroke-width: 0.9pt;
+                vector-effect: non-scaling-stroke;
+            }
+            .subgrid {
+                fill: none;
+                stroke: grey;
+                stroke-width: 0.3pt;
+                vector-effect: non-scaling-stroke;
+            }
+            .datapath {
+                fill: none;
+                stroke: red;
+                stroke-width: 1.3pt;
+                vector-effect: non-scaling-stroke;
+            }
+            .functionpath {
+                fill: none;
+                stroke: blue;
+                stroke-width: 1.3pt;
+                vector-effect: non-scaling-stroke;
+            }
+            .axis {
+                fill: none;
+                stroke: black;
+                stroke-width: 1pt;
+            }
+            .frame {
+                fill: none;
+                stroke: grey;
+            }
+            .label {
+                text-align: center;
+            }
+            .error {
+                background-color: red;
+                color: white;
+                font-family: 'Courier New', Courier, monospace;
+            }
+        </style>
+        <svg id="lms-chart">
+            <defs>
+                <marker id="lmsarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
+                     refX="-10" refY="0" markerWidth="10" markerHeight="4" orient="auto">
+                    <path style="stroke: none;" d="M0 0 L -10 2 L -10 -2 z"></path>
+                </marker>
+                <marker id="lmsbullet" preserveAspectRatio="none" viewBox="-1 -1 2 2" 
+                     refX="0" refY="0" markerWidth="10" markerHeight="10" orient="auto">
+                    <circle  vector-effect="non-scaling-size" r=".75" />
+                </marker>
+            </defs>
+            <g id="lms-alles">
+                <svg id="lms-chart-graph">
+                    <g id="lms-chart-mirrored">
+                        <path class="grid"    id="lms-chart-grid"></path>
+                        <path class="subgrid" id="lms-chart-subgrid"></path>
+                    </g>
+                </svg>
+                <g id="lms-chart-axis">
+                    <rect id="lms-chart-frame" class="frame"></rect>
+                    <line id="lms-chart-x-axis" class="axis" marker-end="url(#lmsarrow)"></line>
+                    <line id="lms-chart-y-axis" class="axis" marker-end="url(#lmsarrow)"></line>
+                    <g id="lms-chart-x-scale"></g>
+                    <g id="lms-chart-y-scale"></g>
+                </g>
+                <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-title"><slot name="title"></slot></foreignObject>
+                <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-xlabel"><slot name="xlabel"></slot></foreignObject>
+                <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-ylabel"><slot name="ylabel"></slot></foreignObject>
+                <foreignObject x="0" y="0" width="80%" height="100%"><div class="error"><slot name="error"></slot></div></foreignObject>
+                <foreignObject x="0" y="0" width="100%" height="100%"><slot></slot></foreignObject>
+                </g>
+        </svg>
+    </template>
+</body>
+
+</html>
