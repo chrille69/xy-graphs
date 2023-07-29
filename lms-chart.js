@@ -59,7 +59,15 @@ class LmsChart extends HTMLElement {
         }
         lmschartcontainer.appendDataPaths(this.xys)
         lmschartcontainer.appendFunctionPaths(this.functions)
-}
+        this.sizeSlots()
+    }
+
+    sizeSlots() {
+        this.shadowRoot.querySelectorAll('.toberesized').forEach(element => {
+            element.setAttribute('width', `${this.gridconfig.totalwidth}cm`)
+            element.setAttribute('height', `${this.gridconfig.totalheight}cm`)
+        });
+    }
 
     parseFunctionAttribute(attr) {
         const emptyfunction = {
@@ -332,13 +340,9 @@ class LmsChartGrid {
 
         this.svgelement = this.content.getElementById("lms-chart-graph")
         this.svgelement.setAttribute("preserveAspectRatio", 'none')
-        this.svgelement.setAttribute("viewBox", `${this.config.totalxmin} -${this.config.totalymax} ${this.config.totalwidth} ${this.config.totalheight}`)
+        this.svgelement.setAttribute("viewBox", `${this.config.totalxmin} 0 ${this.config.totalwidth} ${this.config.totalheight}`)
         this.svgelement.setAttribute("width", `${this.config.totalwidth}cm`)
         this.svgelement.setAttribute("height", `${this.config.totalheight}cm`)
-
-        this.g = this.content.getElementById("lms-chart-mirrored")
-        this.svgelement.appendChild(this.g)
-        this.g.style["transform"] = `scale(${this.config.xscale}, -${this.config.yscale})`
 
         this.appendSubgrid()
         this.appendGrid()
@@ -358,14 +362,17 @@ class LmsChartGrid {
         element.classList.add('datapath')
         element.style['stroke'] = xyinfo.color
         element.setAttribute("d", dpath)
-        this.g.appendChild(element)
+        //element.setAttribute("marker-mid", "url(#lmsbullet)")
+        this.svgelement.appendChild(element)
     }
 
     tupelToPoints(tupel) {
         if (! Array.isArray(tupel) || tupel.length < 2)
             throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
-        const x = parseFloat(tupel[0])
-        const y = parseFloat(tupel[1])
+        let x = parseFloat(tupel[0])
+        let y = parseFloat(tupel[1])
+        x = x*this.config.xscale
+        y = (this.config.ymax - y)*this.config.yscale
         if (isNaN(x))
             throw new ChartError(`${tupel[0]} ist keine Zahl.`)
         if (isNaN(y))
@@ -400,7 +407,7 @@ class LmsChartGrid {
         element.classList.add('functionpath')
         element.style['stroke'] = funcinfo.color
         element.setAttribute("d", dpath)
-        this.g.appendChild(element)
+        this.svgelement.appendChild(element)
     }
 
     appendGrid() {
@@ -408,13 +415,13 @@ class LmsChartGrid {
 
         if (! this.config.xhidegrid) {
             for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xgrid) {
-                dgrid += ` M${i} ${this.config.ymin} L${i} ${this.config.ymax}`
+                dgrid += ` M${this.tupelToPoints([i,this.config.ymin])} L${this.tupelToPoints([i,this.config.ymax])}`
             }
         }
         
         if (! this.config.yhidegrid) {
             for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ygrid) {
-                dgrid += ` M${this.config.xmin} ${i} L${this.config.xmax} ${i}`
+                dgrid += ` M${this.tupelToPoints([this.config.xmin,i])} L${this.tupelToPoints([this.config.xmax,i])}`
             }
         }
 
@@ -430,13 +437,13 @@ class LmsChartGrid {
 
         if (! this.config.xhidesubgrid) {
             for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xsubgrid) {
-                dsubgrid += ` M${i} ${this.config.ymin} L${i} ${this.config.ymax}`
+                dsubgrid += ` M${this.tupelToPoints([i,this.config.ymin])} L${this.tupelToPoints([i,this.config.ymax])}`
             }
         }
 
         if (! this.config.yhidesubgrid) {
             for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ysubgrid) {
-                dsubgrid += ` M${this.config.xmin} ${i} L${this.config.xmax} ${i}`
+                dsubgrid += ` M${this.tupelToPoints([this.config.xmin,i])} L${this.tupelToPoints([this.config.xmax,i])}`
             }
         }
 
