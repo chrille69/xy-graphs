@@ -16,36 +16,57 @@ class LmsChart extends HTMLElement {
             this.create();
         }
         catch(err) {
-            this.shadowRoot.innerHTML=`<div style="font-family: Courier"><div style="background-color: red; color: white">${err.name}</div><div>${err.message}</div><pre>${err.stack}</pre</div>`
+            this.shadowRoot.getElementById('charterrorname').innerHTML = err.name
+            this.shadowRoot.getElementById('charterrormessage').innerHTML = err.message
+            this.shadowRoot.getElementById('charterrorstack').innerHTML = err.stack
+            this.shadowRoot.getElementById('lms-chart').style.display = 'none'
         }
     }
 
     create() {
-        const xsize = this.getAttribute("x-size")
-        const ysize = this.getAttribute("y-size")
-        const xgrid = this.getAttribute("x-grid")
-        const ygrid = this.getAttribute("y-grid")
-        const xsubgrid = this.getAttribute("x-subgrid")
-        const ysubgrid = this.getAttribute("y-subgrid")
-        const xmin = this.getAttribute("x-min")
-        const xmax = this.getAttribute("x-max")
-        const ymin = this.getAttribute("y-min")
-        const ymax = this.getAttribute("y-max")
-        const xhidegrid = this.getAttribute("x-hidegrid")
-        const yhidegrid = this.getAttribute("y-hidegrid")
-        const xhidesubgrid = this.getAttribute("x-hidesubgrid")
-        const yhidesubgrid = this.getAttribute("y-hidesubgrid")
-        const xhideaxis = this.getAttribute("x-hideaxis")
-        const yhideaxis = this.getAttribute("y-hideaxis")
-        const xhidescale = this.getAttribute("x-hidescale")
-        const yhidescale = this.getAttribute("y-hidescale")
-        this.gridconfig = new LmsChartGridConfig(xsize, ysize,
-            xgrid, ygrid, xsubgrid, ysubgrid,
-            xmin, xmax, ymin, ymax,
-            xhidegrid, yhidegrid, xhidesubgrid, yhidesubgrid,
-            xhideaxis, yhideaxis, xhidescale, yhidescale)
+        this.gridobject = {
+            xsize: 1,
+            ysize: 1,
+            xdelta: 1,
+            ydelta: 1,
+            xsubdelta: 0.2,
+            ysubdelta: 0.2,
+            xmin: 0,
+            xmax: 10,
+            ymin: 0,
+            ymax: 10,
+            xhidegrid: false,
+            yhidegrid: false,
+            xhidesubgrid: false,
+            yhidesubgrid: false,
+            xhideaxis: false,
+            yhideaxis: false,
+            xhidescale: false,
+            yhidescale: false
+        }
+        this.emptyfunction = {
+            expr: null,
+            start: 0,
+            end: 10,
+            step: 0.1,
+            fillcolor: null,
+            strokecolor: 'blue',
+            style: 'line',
+            linewidth: '1.3pt',
+            symbolsize: 0.15
+        }
+        this.emptyxy = {
+            values: null,
+            fillcolor: null,
+            strokecolor: 'red',
+            style: 'line',
+            linewidth: '1.3pt',
+            symbolsize: 0.15
+        }
 
-        const lmschartcontainer = new LmsChartContainer(this.xys, this.functions, this.gridconfig, this)
+        this.gridkeys = Object.keys(this.gridobject)
+        this.functionkeys = Object.keys(this.emptyfunction)
+        this.xykeys = Object.keys(this.emptyxy)
 
         this.functions = {}
         this.xys = {}
@@ -56,10 +77,26 @@ class LmsChart extends HTMLElement {
             else if (attr.name.startsWith('xy-')) {
                 this.parseXYAttribute(attr)
             }
+            else if (attr.name.startsWith('grid-')) {
+                this.parseGridAttribute(attr)
+            }
         }
-        lmschartcontainer.appendDataPaths(this.xys)
-        lmschartcontainer.appendFunctionPaths(this.functions)
-        this.sizeSlots()
+
+        try {
+            this.gridconfig = new LmsChartGridConfig(this.gridobject)
+            const lmschartcontainer = new LmsChartContainer(this)
+            lmschartcontainer.appendDataPaths(this.xys)
+            lmschartcontainer.appendFunctionPaths(this.functions)
+            this.sizeSlots()
+        }
+        catch(err) {
+            if (err instanceof ChartError) {
+                this.errormessage(err.message)
+            }
+            else {
+                throw err
+            }
+        }
     }
 
     sizeSlots() {
@@ -69,15 +106,55 @@ class LmsChart extends HTMLElement {
         });
     }
 
-    parseFunctionAttribute(attr) {
-        const emptyfunction = {
-            expr: null,
-            start: 0,
-            end: 10,
-            step: 0.1,
-            color: 'red'
+    parseGridAttribute(attr) {
+        const attrinfo = attr.name.split('-')
+        if (attrinfo.length < 2) {
+            this.errormessage(`${attr.name}: Falsches Format. grid-[eigenschaft] gefordert.`)
+            return
         }
+        if (attrinfo[1] == '') {
+            this.errormessage(`${attr.name}: Falsches Format. Eigenschaft fehlt.`)
+            return
+        }
+        
+        const gridprop = attrinfo[1]
+        if (! this.gridkeys.includes(gridprop)) {
+            this.errormessage(`${attr.name}: Erlaubte Eigenschaften: ${this.gridkeys.join(", ")}.`)
+            return
+        }
+        switch(gridprop) {
+            case 'xsize':
+            case 'ysize':
+            case 'xsize':
+            case 'ysize':
+            case 'xdelta':
+            case 'ydelta':
+            case 'xsubdelta':
+            case 'ysubdelta':
+            case 'xmin':
+            case 'xmax':
+            case 'ymin':
+            case 'ymax':
+                const number = Number(attr.value)
+                if (isNaN(number)) return
+                this.gridobject[gridprop] = number
+                break;
+            case 'xhidegrid':
+            case 'yhidegrid':
+            case 'xhidesubgrid':
+            case 'yhidesubgrid':
+            case 'xhideaxis':
+            case 'yhideaxis':
+            case 'xhidescale':
+            case 'yhidescale':
+                this.gridobject[gridprop] = ! ["0", "false"].includes(attr.value)
+                break;
+            default:
+                this.gridobject[gridprop] = attr.value
+        }
+    }
 
+    parseFunctionAttribute(attr) {
         const attrinfo = attr.name.split('-')
         if (attrinfo.length != 3) {
             this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
@@ -90,38 +167,29 @@ class LmsChart extends HTMLElement {
 
         const funcname = attrinfo[2]
         const functyp = attrinfo[1]
-        const keys = Object.keys(emptyfunction)
-        if (! keys.includes(functyp)) {
-            this.errormessage(`${attr.name}: Erlaubt sind nur ${keys}`)
+        if (! this.functionkeys.includes(functyp)) {
+            this.errormessage(`${attr.name}: Erlaubt sind nur ${this.functionkeys.join(', ')}`)
             return
         }
 
         if (!(funcname in this.functions))
-            this.functions[funcname] = {...emptyfunction}
+            this.functions[funcname] = {...this.emptyfunction}
 
         switch(functyp) {
             case 'start':
             case 'end':
             case 'step':
+            case 'symbolsize':
                 const number = Number(attr.value)
                 if (isNaN(number)) return
                 this.functions[funcname][functyp] = number
                 break;
-            case 'expr':
+            default:
                 this.functions[funcname][functyp] = attr.value
-                break;
-            case 'color':
-                this.functions[funcname][functyp] = attr.value
-                break;
         }
     }
 
     parseXYAttribute(attr) {
-        const emptyxy = {
-            values: null,
-            color: 'red'
-        }
-
         const attrinfo = attr.name.split('-')
         if (attrinfo.length != 3) {
             this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
@@ -134,14 +202,13 @@ class LmsChart extends HTMLElement {
 
         const xyname = attrinfo[2]
         const xytyp = attrinfo[1]
-        const keys = Object.keys(emptyxy)
-        if (! keys.includes(xytyp)) {
-            this.errormessage(`${attr.name}: Falscher typ. Erlaubt sind nur ${keys}`)
+        if (! this.xykeys.includes(xytyp)) {
+            this.errormessage(`${attr.name}: Falscher typ. Erlaubt sind nur ${this.xykeys.join(', ')}`)
             return
         }
 
         if (!(xyname in this.xys))
-            this.xys[xyname] = {...emptyxy}
+            this.xys[xyname] = {...this.emptyxy}
 
         switch(xytyp) {
             case 'values':
@@ -152,9 +219,13 @@ class LmsChart extends HTMLElement {
                     this.errormessage(err)
                 }
                 break;
-            case 'color':
-                this.xys[xyname][xytyp] = attr.value
+            case 'symbolsize':
+                const number = Number(attr.value)
+                if (isNaN(number)) return
+                this.functions[funcname][functyp] = number
                 break;
+            default:
+                this.xys[xyname][xytyp] = attr.value
         }
     }
 
@@ -166,13 +237,9 @@ class LmsChart extends HTMLElement {
 customElements.define('lms-chart', LmsChart);
 
 class LmsChartContainer {
-    constructor(d, f, g, parent) {
-        // Defaultwerte
-        this.gridconfig = g
-        this.xys = d
-        this.functions = f
+    constructor(parent) {
         this.parent = parent
-
+        this.gridconfig = parent.gridconfig
         const content = parent.shadowRoot
 
         this.svg = content.getElementById("lms-chart")
@@ -203,16 +270,16 @@ class LmsChartContainer {
             const xdivrect = xlabelslot ? titleslot.getBoundingClientRect() : new DOMRect()
             const ydivrect = ylabelslot ? ylabelslot.getBoundingClientRect() : new DOMRect()
             const titlerect = titleslot ? titleslot.getBoundingClientRect() : new DOMRect()
-            this.xlabeltextele.style['transform'] = `translate(0, ${rect.height+rect.y}px)`
-            this.ylabeltextele.style['transform'] = `translate(${rect.x-ydivrect.width-gap}px, ${this.gridconfig.height*this.gridconfig.yscale}cm) rotate(-90deg)`
-            this.titletextele.style['transform'] = `translate(0, -${titlerect.height-rect.y}px)`
+            this.xlabeltextele.style.transform = `translate(0, ${rect.height+rect.y}px)`
+            this.ylabeltextele.style.transform = `translate(${rect.x-ydivrect.width-gap}px, ${this.gridconfig.height*this.gridconfig.yscale}cm) rotate(-90deg)`
+            this.titletextele.style.transform = `translate(0, -${titlerect.height-rect.y}px)`
 
             // Berechne die gesamte benötigte Höhe und Breite
             const breite = ydivrect.width + rect.width + gap
             const hoehe = xdivrect.height + rect.height + titlerect.height
             this.svg.setAttribute("width", `${breite}px`)
             this.svg.setAttribute("height", `${hoehe}px`)
-            alles.style['transform'] = `translate(${ydivrect.width-rect.x+gap}px, ${-rect.y+titlerect.height}px)`
+            alles.style.transform = `translate(${ydivrect.width-rect.x+gap}px, ${-rect.y+titlerect.height}px)`
         }, 0)
     }
 
@@ -245,16 +312,16 @@ class LmsChartContainer {
     }
 
     resizexlabel() {
-        this.xlabeltextele.style["width"] = `${this.gridconfig.width*this.gridconfig.xscale}cm`
+        this.xlabeltextele.style.width = `${this.gridconfig.width*this.gridconfig.xscale}cm`
     }
 
     resizeylabel() {
-        this.ylabeltextele.style["width"] = `${this.gridconfig.height*this.gridconfig.yscale}cm`
-        this.ylabeltextele.style['transform'] = 'rotate(-90deg)'
+        this.ylabeltextele.style.width = `${this.gridconfig.height*this.gridconfig.yscale}cm`
+        this.ylabeltextele.style.transform = 'rotate(-90deg)'
     }
 
     resizetitle() {
-        this.titletextele.style["width"] = `${this.gridconfig.width*this.gridconfig.xscale}cm`
+        this.titletextele.style.width = `${this.gridconfig.width*this.gridconfig.xscale}cm`
     }
 }
 
@@ -289,17 +356,29 @@ class LmsChartAchsen {
 
     configureXscale() {
         const xskala = this.content.getElementById("lms-chart-x-scale")
-        for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xgrid) {
+        for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
             if (i != 0)
-                xskala.appendChild(this.scaletext(i.toLocaleString('de-DE'), `${i*this.config.xscale-this.config.totalxmin}cm`, `${this.config.totalheight}cm`, 'text-before-edge', 'middle'))
+                xskala.appendChild(this.scaletext(
+                    i.toLocaleString('de-DE'),
+                    `${i*this.config.xscale-this.config.totalxmin}cm`,
+                    `${this.config.totalheight}cm`,
+                    'text-before-edge',
+                    'middle'
+                ))
         }
     }
 
     configureYscale() {
         const yskala = this.content.getElementById("lms-chart-y-scale")
-        for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ygrid) {
+        for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
             if (i != 0)
-                yskala.appendChild(this.scaletext(i.toLocaleString('de-DE'), this.yskalagap, `${this.config.totalymax-i*this.config.yscale}cm`, 'central', 'end'))
+                yskala.appendChild(this.scaletext(
+                    i.toLocaleString('de-DE'),
+                    this.yskalagap,
+                    `${this.config.totalymax-i*this.config.yscale}cm`,
+                    'central',
+                    'end'
+                ))
         }
         this.svgelement.appendChild(yskala)
     }
@@ -308,7 +387,8 @@ class LmsChartAchsen {
         const element = document.createElementNS("http://www.w3.org/2000/svg", "text")
         element.setAttribute("x", x)
         element.setAttribute("y", y)
-        element.setAttribute("style", `dominant-baseline: ${baseline}; text-anchor: ${anchor};`)
+        element.style['dominant-baseline'] = baseline
+        element.style['text-anchor'] = anchor
         element.innerHTML = txt
         return element
     }
@@ -335,6 +415,9 @@ class LmsChartGrid {
         if(! c instanceof LmsChartGridConfig)
             throw new Error('LmsChartGrid muss mit LmsChartGridConfig erzeugt werden.')
 
+        this.cos30 = 0.8660254037844387
+        this.sin30 = 0.5
+    
         this.config = c
         this.content = content
 
@@ -356,28 +439,15 @@ class LmsChartGrid {
         let dpath = `M${this.tupelToPoints(xyinfo.values[0])}`
         for (let i=1; i<xyinfo.values.length; i++) {
             const tupel = xyinfo.values[i]
-            dpath += ` L${this.tupelToPoints(tupel)}`
+            dpath += this.tupelToPoints(tupel, xyinfo.style, xyinfo.symbolsize)
         }
         const element = document.createElementNS("http://www.w3.org/2000/svg", "path")
         element.classList.add('datapath')
-        element.style['stroke'] = xyinfo.color
+        element.style['stroke'] = xyinfo.strokecolor
+        element.style['fill'] = xyinfo.fillcolor
+        element.style['stroke-width'] = xyinfo.linewidth
         element.setAttribute("d", dpath)
-        //element.setAttribute("marker-mid", "url(#lmsbullet)")
         this.svgelement.appendChild(element)
-    }
-
-    tupelToPoints(tupel) {
-        if (! Array.isArray(tupel) || tupel.length < 2)
-            throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
-        let x = parseFloat(tupel[0])
-        let y = parseFloat(tupel[1])
-        x = x*this.config.xscale
-        y = (this.config.ymax - y)*this.config.yscale
-        if (isNaN(x))
-            throw new ChartError(`${tupel[0]} ist keine Zahl.`)
-        if (isNaN(y))
-            throw new ChartError(`${tupel[1]} ist keine Zahl.`)
-        return `${x} ${y}`
     }
 
     appendFunctionPath(id, funcinfo) {
@@ -389,9 +459,24 @@ class LmsChartGrid {
             throw new ChartError(`function (id=${id}): end ${funcinfo.end} ist keine Zahl.`)
         if (isNaN(funcinfo.step))
             throw new ChartError(`function (id=${id}): end ${funcinfo.step} ist keine Zahl.`)
-        
-        let command = 'M'
-        for (let i = funcinfo.start; i <= funcinfo.end; i += funcinfo.step) {
+        if (funcinfo.step == 0)
+            throw new ChartError(`function (id=${id}): step darf nicht null sein.`)
+        if (funcinfo.step > 0 && funcinfo.start > funcinfo.end)
+            throw new ChartError(`function (id=${id}): step > 0 aber end < start.`)
+        if (funcinfo.step < 0 && funcinfo.start < funcinfo.end)
+            throw new ChartError(`function (id=${id}): step < 0 aber end > start.`)
+
+        try {
+            tupel = [funcinfo.start, math.evaluate(funcinfo.expr, { 'x': funcinfo.start })]
+        }
+        catch(err) {
+            throw new ChartError(err.message)
+        }
+        if (tupel[1] == Infinity)
+            throw new ChartError(`function (id=${id}): Bis zur Unendlichkeit und noch viel weiter...`)
+        dpath = `M${this.tupelToPoints(tupel)}`
+
+        for (let i = funcinfo.start; i < funcinfo.end && funcinfo.start < funcinfo.end || i > funcinfo.end && funcinfo.start > funcinfo.end; i += funcinfo.step) {
             try {
                 tupel = [i, math.evaluate(funcinfo.expr, { 'x': i })]
             }
@@ -400,27 +485,61 @@ class LmsChartGrid {
             }
             if (tupel[1] == Infinity)
                 throw new ChartError(`function (id=${id}): Bis zur Unendlichkeit und noch viel weiter...`)
-            dpath += ` ${command}${this.tupelToPoints(tupel)}`
-            command = 'L'
+            dpath += this.tupelToPoints(tupel, funcinfo.style, funcinfo.symbolsize)
         }
         const element = document.createElementNS("http://www.w3.org/2000/svg", "path")
         element.classList.add('functionpath')
-        element.style['stroke'] = funcinfo.color
+        element.style['stroke'] = funcinfo.strokecolor
+        element.style['fill'] = funcinfo.fillcolor
+        element.style['stroke-width'] = funcinfo.linewidth
         element.setAttribute("d", dpath)
         this.svgelement.appendChild(element)
+    }
+
+    tupelToPoints(tupel, style, symbolsize) {
+        if (! Array.isArray(tupel) || tupel.length < 2)
+            throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
+        let x = parseFloat(tupel[0])
+        let y = parseFloat(tupel[1])
+        x = x*this.config.xscale
+        y = (this.config.ymax - y)*this.config.yscale
+        if (isNaN(x))
+            throw new ChartError(`${tupel[0]} ist keine Zahl.`)
+        if (isNaN(y))
+            throw new ChartError(`${tupel[1]} ist keine Zahl.`)
+
+        if (!style)
+            return `${x} ${y}`
+        
+        switch (style) {
+            case 'line':
+                return ` L${x} ${y}`
+            case 'circle':
+                return ` M${x-symbolsize} ${y} a${symbolsize} ${symbolsize} 180 0 0 ${2*symbolsize} 0 a${symbolsize} ${symbolsize} 180 0 0 ${-2*symbolsize} 0 z`
+            case 'cross':
+                return ` M${x-symbolsize} ${y-symbolsize} l${2*symbolsize} ${2*symbolsize} m${-2*symbolsize} 0 l${2*symbolsize} ${-2*symbolsize}`
+            case 'square':
+                return ` M${x-symbolsize} ${y-symbolsize} l${2*symbolsize} 0 l0 ${2*symbolsize} l${-2*symbolsize} 0 z`
+            case 'diamond':
+                return ` M${x-symbolsize} ${y} l${symbolsize} ${symbolsize} l${symbolsize} ${-symbolsize} l${-symbolsize} ${-symbolsize} z`
+            case 'triangle':
+                return ` M${x} ${y-symbolsize} l ${this.cos30*symbolsize} ${(1+this.sin30)*symbolsize} l${-2*this.cos30*symbolsize} 0 z`
+            default:
+                return ` L${x} ${y}`
+        }
     }
 
     appendGrid() {
         let dgrid = ""
 
         if (! this.config.xhidegrid) {
-            for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xgrid) {
+            for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
                 dgrid += ` M${this.tupelToPoints([i,this.config.ymin])} L${this.tupelToPoints([i,this.config.ymax])}`
             }
         }
         
         if (! this.config.yhidegrid) {
-            for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ygrid) {
+            for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
                 dgrid += ` M${this.tupelToPoints([this.config.xmin,i])} L${this.tupelToPoints([this.config.xmax,i])}`
             }
         }
@@ -429,20 +548,20 @@ class LmsChartGrid {
             return
         
         const element = this.content.getElementById("lms-chart-grid")
-        element.setAttribute("d",dgrid)
+        element.setAttribute("d", dgrid)
     }
 
     appendSubgrid() {
         let dsubgrid = ''
 
         if (! this.config.xhidesubgrid) {
-            for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xsubgrid) {
+            for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xsubdelta) {
                 dsubgrid += ` M${this.tupelToPoints([i,this.config.ymin])} L${this.tupelToPoints([i,this.config.ymax])}`
             }
         }
 
         if (! this.config.yhidesubgrid) {
-            for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ysubgrid) {
+            for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ysubdelta) {
                 dsubgrid += ` M${this.tupelToPoints([this.config.xmin,i])} L${this.tupelToPoints([this.config.xmax,i])}`
             }
         }
@@ -456,34 +575,15 @@ class LmsChartGrid {
 }
 
 class LmsChartGridConfig {
-    constructor(xsize, ysize,
-        xgrid, ygrid, xsubgrid, ysubgrid,
-        xmin, xmax, ymin, ymax,
-        xhidegrid, yhidegrid, xhidesubgrid, yhidesubgrid,
-        xhideaxis, yhideaxis, xhidescale, yhidescale) {
-        this.xsize = parseFloat(xsize) || 1 // Die Größe eines Gridkästchens in cm
-        this.ysize = parseFloat(ysize) || 1
-        this.xgrid = parseFloat(xgrid) || 1       // Hauptskalierungsschritt an den Achsen
-        this.ygrid = parseFloat(ygrid) || 1
-        this.xsubgrid = parseFloat(xsubgrid) || 0.2     // Unterskalierungsschritt an den Achsen
-        this.ysubgrid = parseFloat(ysubgrid) || 0.2
-        this.xmin = parseFloat(xmin) || 0
-        this.xmax = parseFloat(xmax) || 10
-        this.ymin = parseFloat(ymin) || 0
-        this.ymax = parseFloat(ymax) || 10
-        this.xhidegrid = xhidegrid && xhidegrid != 0
-        this.yhidegrid = yhidegrid && yhidegrid != 0
-        this.xhidesubgrid = xhidesubgrid && xhidesubgrid != 0
-        this.yhidesubgrid = yhidesubgrid && yhidesubgrid != 0
-        this.xhideaxis = xhideaxis && xhideaxis != 0
-        this.yhideaxis = yhideaxis && yhideaxis != 0
-        this.xhidescale = xhidescale && xhidescale != 0
-        this.yhidescale = yhidescale && yhidescale != 0
+    constructor(gridconfigobject) {
+        Object.assign(this, gridconfigobject)
 
-        this.xscale = this.xsize/this.xgrid
-        this.yscale = this.ysize/this.ygrid
+        this.xscale = this.xsize/this.xdelta
+        this.yscale = this.ysize/this.ydelta
         this.width = this.xmax - this.xmin
+        if (this.width < 0) throw new ChartError('xmin > xmax')
         this.height = this.ymax - this.ymin
+        if (this.height < 0) throw new ChartError('ymin > ymax')
 
         this.totalwidth = this.width*this.xscale
         this.totalheight = this.height*this.yscale
