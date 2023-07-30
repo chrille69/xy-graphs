@@ -27,13 +27,11 @@
             }
             .datapath {
                 fill: none;
-                stroke: red;
                 stroke-width: 1.3pt;
                 vector-effect: non-scaling-stroke;
             }
             .functionpath {
                 fill: none;
-                stroke: blue;
                 stroke-width: 1.3pt;
                 vector-effect: non-scaling-stroke;
             }
@@ -58,23 +56,22 @@
                 overflow: visible;
             }
         </style>
+        <div style="font-family: Courier">
+            <div id="charterrorname" style="background-color: red; color: white"></div>
+            <div id="charterrormessage"></div>
+            <pre id="charterrorstack"></pre>
+        </div>
         <svg id="lms-chart">
             <defs>
                 <marker id="lmsarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
                      refX="-10" refY="0" markerWidth="10" markerHeight="4" orient="auto">
                     <path style="stroke: none;" d="M0 0 L -10 2 L -10 -2 z"></path>
                 </marker>
-                <marker id="lmsbullet" preserveAspectRatio="none" viewBox="-0.5 -0.5 1 1" 
-                     refX="0" refY="0" markerWidth="4" markerHeight="4" orient="auto">
-                    <circle r=".5" />
-                </marker>
             </defs>
             <g id="lms-alles">
                 <svg id="lms-chart-graph">
-                    <g id="lms-chart-mirrored">
-                        <path class="grid"    id="lms-chart-grid"></path>
-                        <path class="subgrid" id="lms-chart-subgrid"></path>
-                    </g>
+                    <path class="grid"    id="lms-chart-grid"></path>
+                    <path class="subgrid" id="lms-chart-subgrid"></path>
                 </svg>
                 <g id="lms-chart-axis">
                     <rect id="lms-chart-frame" class="frame"></rect>
@@ -86,9 +83,9 @@
                 <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-title"><slot name="title"></slot></foreignObject>
                 <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-xlabel"><slot name="xlabel"></slot></foreignObject>
                 <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-ylabel"><slot name="ylabel"></slot></foreignObject>
-                <foreignObject x="0" y="0" width="80%" height="100%"><div class="error"><slot name="error"></slot></div></foreignObject>
-                <foreignObject x="0" y="0" width="100%" height="100%"><slot></slot></foreignObject>
-                </g>
+                <foreignObject class="toberesized" x="0" y="0" width="80%" height="100%"><div class="error"><slot name="error"></slot></div></foreignObject>
+                <foreignObject class="toberesized" x="0" y="0" width="100%" height="100%"><slot></slot></foreignObject>
+            </g>
         </svg>
     </template>
 </body>
