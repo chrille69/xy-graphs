@@ -40,12 +40,12 @@
                 stroke: black;
                 stroke-width: 1pt;
             }
+            .label {
+                text-align: center;
+            }
             .frame {
                 fill: none;
                 stroke: grey;
-            }
-            .label {
-                text-align: center;
             }
             .error {
                 background-color: red;
@@ -54,6 +54,15 @@
             }
             #lms-chart {
                 overflow: visible;
+            }
+            #lms-chart-legend {
+                position: absolute;
+                background-color: white;
+                padding: 1mm;
+                border: 0.5pt solid gray;
+                border-radius: 2mm;
+                top: 2mm;
+                left: 2mm;
             }
         </style>
         <div style="font-family: Courier">
@@ -73,6 +82,7 @@
                     <path class="grid"    id="lms-chart-grid"></path>
                     <path class="subgrid" id="lms-chart-subgrid"></path>
                 </svg>
+                <foreignObject class="toberesized" width="100%" height="100%"><div id="lms-chart-legend"></div></foreignObject>
                 <g id="lms-chart-axis">
                     <rect id="lms-chart-frame" class="frame"></rect>
                     <line id="lms-chart-x-axis" class="axis" marker-end="url(#lmsarrow)"></line>
@@ -80,11 +90,11 @@
                     <g id="lms-chart-x-scale"></g>
                     <g id="lms-chart-y-scale"></g>
                 </g>
-                <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-title"><slot name="title"></slot></foreignObject>
-                <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-xlabel"><slot name="xlabel"></slot></foreignObject>
-                <foreignObject width="1cm" height="1cm" class="label" id="lms-chart-ylabel"><slot name="ylabel"></slot></foreignObject>
-                <foreignObject class="toberesized" x="0" y="0" width="80%" height="100%"><div class="error"><slot name="error"></slot></div></foreignObject>
-                <foreignObject class="toberesized" x="0" y="0" width="100%" height="100%"><slot></slot></foreignObject>
+                <foreignObject width="10cm" height="1px" class="label" id="lms-chart-title"><slot name="title"></slot></foreignObject>
+                <foreignObject width="10cm" height="1px" class="label" id="lms-chart-xlabel"><slot name="xlabel"></slot></foreignObject>
+                <foreignObject width="10cm" height="1px" class="label" id="lms-chart-ylabel"><slot name="ylabel"></slot></foreignObject>
+                <foreignObject class="toberesized" width="100%" height="100%"><div class="error"><slot name="error"></slot></div></foreignObject>
+                <foreignObject class="toberesized" width="100%" height="100%"><slot></slot></foreignObject>
             </g>
         </svg>
     </template>
