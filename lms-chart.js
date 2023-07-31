@@ -53,7 +53,8 @@ class LmsChart extends HTMLElement {
             strokecolor: 'blue',
             style: 'line',
             linewidth: '1.3pt',
-            symbolsize: 0.15
+            symbolsize: 0.15,
+            name: null
         }
         this.emptyxy = {
             values: null,
@@ -61,7 +62,8 @@ class LmsChart extends HTMLElement {
             strokecolor: 'red',
             style: 'line',
             linewidth: '1.3pt',
-            symbolsize: 0.15
+            symbolsize: 0.15,
+            name: null
         }
 
         this.gridkeys = Object.keys(this.gridobject)
@@ -100,6 +102,16 @@ class LmsChart extends HTMLElement {
     }
 
     sizeSlots() {
+        const xlabeltextele = this.shadowRoot.getElementById("lms-chart-xlabel")
+        xlabeltextele.style.width = `${this.gridconfig.width*this.gridconfig.xscale}cm`
+
+        const ylabeltextele = this.shadowRoot.getElementById("lms-chart-ylabel")
+        ylabeltextele.style.width = `${this.gridconfig.height*this.gridconfig.yscale}cm`
+        ylabeltextele.style.transform = 'rotate(-90deg)'
+
+        const titletextele = this.shadowRoot.getElementById("lms-chart-title")
+        titletextele.style.width = `${this.gridconfig.width*this.gridconfig.xscale}cm`
+
         this.shadowRoot.querySelectorAll('.toberesized').forEach(element => {
             element.setAttribute('width', `${this.gridconfig.totalwidth}cm`)
             element.setAttribute('height', `${this.gridconfig.totalheight}cm`)
@@ -222,7 +234,7 @@ class LmsChart extends HTMLElement {
             case 'symbolsize':
                 const number = Number(attr.value)
                 if (isNaN(number)) return
-                this.functions[funcname][functyp] = number
+                this.xys[xyname][xytyp] = number
                 break;
             default:
                 this.xys[xyname][xytyp] = attr.value
@@ -252,9 +264,6 @@ class LmsChartContainer {
         this.ylabeltextele = content.getElementById("lms-chart-ylabel")
         this.titletextele = content.getElementById("lms-chart-title")
 
-        this.resizexlabel()
-        this.resizeylabel()
-        this.resizetitle()
         // Um die Achsenbeschriftung korrekt positionieren zu können, muss ich für einen
         // Augenblick die Kontrolle an den Browser zurückgeben, damit er ein erstes Mal rendern kann.
         // Dazu wird setTimeout mit einem Timeout von 0 aufgerufen. Das bewirkt, dass die folgende
@@ -264,28 +273,37 @@ class LmsChartContainer {
             // Positioniere die Achsenbeschriftung
             const gap = 3
             const rect = lmschartachsen.svgelement.getBBox()
-            const xlabelslot = content.host.querySelector("*[slot=xlabel]")
-            const ylabelslot = content.host.querySelector("*[slot=ylabel]")
-            const titleslot = content.host.querySelector("*[slot=title]")
-            const xdivrect = xlabelslot ? titleslot.getBoundingClientRect() : new DOMRect()
-            const ydivrect = ylabelslot ? ylabelslot.getBoundingClientRect() : new DOMRect()
-            const titlerect = titleslot ? titleslot.getBoundingClientRect() : new DOMRect()
+            
+            const xlabelsize = this.getSizeFromStyle(parent.querySelector("*[slot=xlabel]"))
+            const ylabelsize = this.getSizeFromStyle(parent.querySelector("*[slot=ylabel]"))
+            const titlesize = this.getSizeFromStyle(parent.querySelector("*[slot=title]"))
+
             this.xlabeltextele.style.transform = `translate(0, ${rect.height+rect.y}px)`
-            this.ylabeltextele.style.transform = `translate(${rect.x-ydivrect.width-gap}px, ${this.gridconfig.height*this.gridconfig.yscale}cm) rotate(-90deg)`
-            this.titletextele.style.transform = `translate(0, -${titlerect.height-rect.y}px)`
+            this.ylabeltextele.style.transform = `translate(${rect.x-ylabelsize.height-gap}px, ${this.gridconfig.height*this.gridconfig.yscale}cm) rotate(-90deg)`
+            this.titletextele.style.transform = `translate(0, ${-titlesize.height+rect.y}px)`
 
             // Berechne die gesamte benötigte Höhe und Breite
-            const breite = ydivrect.width + rect.width + gap
-            const hoehe = xdivrect.height + rect.height + titlerect.height
+            const breite = ylabelsize.height + rect.width + gap
+            const hoehe = xlabelsize.height + rect.height + titlesize.height
             this.svg.setAttribute("width", `${breite}px`)
             this.svg.setAttribute("height", `${hoehe}px`)
-            alles.style.transform = `translate(${ydivrect.width-rect.x+gap}px, ${-rect.y+titlerect.height}px)`
+            alles.style.transform = `translate(${ylabelsize.height-rect.x+gap}px, ${-rect.y+titlesize.height}px)`
         }, 0)
+    }
+
+    getSizeFromStyle(element) {
+        if (!element)
+            return { width: 0, height: 0}
+        const style = window.getComputedStyle(element)
+        const height = parseFloat(style.height)+parseFloat(style['margin-top'])+parseFloat(style['margin-bottom'])
+        const width = parseFloat(style.width)+parseFloat(style['margin-right'])+parseFloat(style['margin-left'])
+        return { width: width, height: height}
     }
 
     appendDataPaths(xys) {
         for (let bezeichnung in xys ) {
             try {
+                this.lmschartgrid.appendLegend(bezeichnung, xys[bezeichnung])
                 this.lmschartgrid.appendDataPath(bezeichnung, xys[bezeichnung])
             }
             catch(err) {
@@ -300,6 +318,7 @@ class LmsChartContainer {
     appendFunctionPaths(functions) {
         for (let bezeichnung in functions ) {
             try {
+                this.lmschartgrid.appendLegend(bezeichnung, functions[bezeichnung])
                 this.lmschartgrid.appendFunctionPath(bezeichnung, functions[bezeichnung])
             }
             catch(err) {
@@ -309,19 +328,6 @@ class LmsChartContainer {
                     throw err
             }
         }
-    }
-
-    resizexlabel() {
-        this.xlabeltextele.style.width = `${this.gridconfig.width*this.gridconfig.xscale}cm`
-    }
-
-    resizeylabel() {
-        this.ylabeltextele.style.width = `${this.gridconfig.height*this.gridconfig.yscale}cm`
-        this.ylabeltextele.style.transform = 'rotate(-90deg)'
-    }
-
-    resizetitle() {
-        this.titletextele.style.width = `${this.gridconfig.width*this.gridconfig.xscale}cm`
     }
 }
 
@@ -432,14 +438,16 @@ class LmsChartGrid {
    }
 
     appendDataPath(id, xyinfo) {
+        let point = []
         if (!xyinfo.values)
             throw new ChartError(`xy (id=${id}): Keine Werte vorhanden.`)
         if (! Array.isArray(xyinfo.values))
             throw new ChartError(`xy (id=${id}): values muss ein zweidimensionales Array sein.`)
-        let dpath = `M${this.tupelToPoints(xyinfo.values[0])}`
+        point = this.tupelToPoint(xyinfo.values[0])
+        let dpath = `M${this.drawSegment(point)}`
         for (let i=1; i<xyinfo.values.length; i++) {
-            const tupel = xyinfo.values[i]
-            dpath += this.tupelToPoints(tupel, xyinfo.style, xyinfo.symbolsize)
+            point = this.tupelToPoint(xyinfo.values[i])
+            dpath += this.drawSegment(point, xyinfo.style, xyinfo.symbolsize)
         }
         const element = document.createElementNS("http://www.w3.org/2000/svg", "path")
         element.classList.add('datapath')
@@ -453,6 +461,7 @@ class LmsChartGrid {
     appendFunctionPath(id, funcinfo) {
         let tupel = []
         let dpath = ''
+        let point
         if (isNaN(funcinfo.start))
             throw new ChartError(`function (id=${id}): start ${funcinfo.start} ist keine Zahl.`)
         if (isNaN(funcinfo.end))
@@ -474,7 +483,8 @@ class LmsChartGrid {
         }
         if (tupel[1] == Infinity)
             throw new ChartError(`function (id=${id}): Bis zur Unendlichkeit und noch viel weiter...`)
-        dpath = `M${this.tupelToPoints(tupel)}`
+        point = this.tupelToPoint(tupel)
+        dpath = `M${this.drawSegment(point)}`
 
         for (let i = funcinfo.start; i < funcinfo.end && funcinfo.start < funcinfo.end || i > funcinfo.end && funcinfo.start > funcinfo.end; i += funcinfo.step) {
             try {
@@ -485,7 +495,8 @@ class LmsChartGrid {
             }
             if (tupel[1] == Infinity)
                 throw new ChartError(`function (id=${id}): Bis zur Unendlichkeit und noch viel weiter...`)
-            dpath += this.tupelToPoints(tupel, funcinfo.style, funcinfo.symbolsize)
+            point = this.tupelToPoint(tupel)
+            dpath += this.drawSegment(point, funcinfo.style, funcinfo.symbolsize)
         }
         const element = document.createElementNS("http://www.w3.org/2000/svg", "path")
         element.classList.add('functionpath')
@@ -496,17 +507,38 @@ class LmsChartGrid {
         this.svgelement.appendChild(element)
     }
 
-    tupelToPoints(tupel, style, symbolsize) {
-        if (! Array.isArray(tupel) || tupel.length < 2)
-            throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
-        let x = parseFloat(tupel[0])
-        let y = parseFloat(tupel[1])
-        x = x*this.config.xscale
-        y = (this.config.ymax - y)*this.config.yscale
-        if (isNaN(x))
-            throw new ChartError(`${tupel[0]} ist keine Zahl.`)
-        if (isNaN(y))
-            throw new ChartError(`${tupel[1]} ist keine Zahl.`)
+    appendLegend(id, info) {
+        const symbolsize = info.symbolsize
+        const legend = this.content.getElementById("lms-chart-legend")
+        const div = document.createElement('div')
+        legend.appendChild(div)
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        svg.setAttribute('width',`${5*symbolsize}cm`)
+        svg.setAttribute('height',`${2*symbolsize}cm`)
+        svg.setAttribute('viewBox',`${-2.5*symbolsize} ${-symbolsize} ${5*symbolsize} ${2*symbolsize}`)
+        div.appendChild(svg)
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+        svg.appendChild(path)
+        let d
+        if (info.style == 'line') {
+            d = `M${this.drawSegment({x: -2*symbolsize, y: 0})}`
+            d += this.drawSegment({x: 2*symbolsize, y: 0}, info.style, symbolsize)
+        }
+        else {
+            d = `M${this.drawSegment({x: 0, y: 0})}`
+            d += this.drawSegment({x: 0, y: 0}, info.style, symbolsize)
+        }
+        path.classList.add('datapath')
+        path.setAttribute('d', d)
+        path.style['stroke'] = info.strokecolor
+        path.style['fill'] = info.fillcolor
+        path.style['stroke-width'] = info.linewidth
+        div.innerHTML += info.name ? info.name : id
+    }
+
+    drawSegment(point, style, symbolsize) {
+        const x = point.x
+        const y = point.y
 
         if (!style)
             return `${x} ${y}`
@@ -529,18 +561,38 @@ class LmsChartGrid {
         }
     }
 
+    tupelToPoint(tupel) {
+        if (! Array.isArray(tupel) || tupel.length < 2)
+            throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
+        let x = parseFloat(tupel[0])
+        let y = parseFloat(tupel[1])
+        x = x*this.config.xscale
+        y = (this.config.ymax - y)*this.config.yscale
+        if (isNaN(x))
+            throw new ChartError(`${tupel[0]} ist keine Zahl.`)
+        if (isNaN(y))
+            throw new ChartError(`${tupel[1]} ist keine Zahl.`)
+        return {x: x, y: y}
+    }
+
     appendGrid() {
         let dgrid = ""
+        let point1
+        let point2
 
         if (! this.config.xhidegrid) {
             for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
-                dgrid += ` M${this.tupelToPoints([i,this.config.ymin])} L${this.tupelToPoints([i,this.config.ymax])}`
+                point1 = this.tupelToPoint([i,this.config.ymin])
+                point2 = this.tupelToPoint([i,this.config.ymax])
+                dgrid += ` M${this.drawSegment(point1)} L${this.drawSegment(point2)}`
             }
         }
         
         if (! this.config.yhidegrid) {
             for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
-                dgrid += ` M${this.tupelToPoints([this.config.xmin,i])} L${this.tupelToPoints([this.config.xmax,i])}`
+                point1 = this.tupelToPoint([this.config.xmin,i])
+                point2 = this.tupelToPoint([this.config.xmax,i])
+                dgrid += ` M${this.drawSegment(point1)} L${this.drawSegment(point2)}`
             }
         }
 
@@ -553,16 +605,22 @@ class LmsChartGrid {
 
     appendSubgrid() {
         let dsubgrid = ''
+        let point1
+        let point2
 
         if (! this.config.xhidesubgrid) {
             for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xsubdelta) {
-                dsubgrid += ` M${this.tupelToPoints([i,this.config.ymin])} L${this.tupelToPoints([i,this.config.ymax])}`
+                point1 = this.tupelToPoint([i,this.config.ymin])
+                point2 = this.tupelToPoint([i,this.config.ymax])
+                dsubgrid += ` M${this.drawSegment(point1)} L${this.drawSegment(point2)}`
             }
         }
 
         if (! this.config.yhidesubgrid) {
             for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ysubdelta) {
-                dsubgrid += ` M${this.tupelToPoints([this.config.xmin,i])} L${this.tupelToPoints([this.config.xmax,i])}`
+                point1 = this.tupelToPoint([this.config.xmin,i])
+                point2 = this.tupelToPoint([this.config.xmax,i])
+                dsubgrid += ` M${this.drawSegment(point1)} L${this.drawSegment(point2)}`
             }
         }
 
