@@ -42,7 +42,10 @@ class LmsChart extends HTMLElement {
             xhideaxis: false,
             yhideaxis: false,
             xhidescale: false,
-            yhidescale: false
+            yhidescale: false,
+            legendposition: 'tl',
+            xlegendpadding: '2mm',
+            ylegendpadding: '2mm',
         }
         this.emptyfunction = {
             expr: null,
@@ -509,13 +512,14 @@ class LmsChartGrid {
 
     appendLegend(id, info) {
         const symbolsize = info.symbolsize
-        const legend = this.content.getElementById("lms-chart-legend")
+        const container = this.content.getElementById("lms-chart-legend-container")
         const div = document.createElement('div')
-        legend.appendChild(div)
+        container.appendChild(div)
+        div.classList.add('legenditem')
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         svg.setAttribute('width',`${5*symbolsize}cm`)
-        svg.setAttribute('height',`${2*symbolsize}cm`)
-        svg.setAttribute('viewBox',`${-2.5*symbolsize} ${-symbolsize} ${5*symbolsize} ${2*symbolsize}`)
+        svg.setAttribute('height',`${3*symbolsize}cm`)
+        svg.setAttribute('viewBox',`${-2.5*symbolsize} ${-1.5*symbolsize} ${5*symbolsize} ${3*symbolsize}`)
         div.appendChild(svg)
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
         svg.appendChild(path)
@@ -533,7 +537,56 @@ class LmsChartGrid {
         path.style['stroke'] = info.strokecolor
         path.style['fill'] = info.fillcolor
         path.style['stroke-width'] = info.linewidth
-        div.innerHTML += info.name ? info.name : id
+        div.innerHTML += `<div>${info.name ? info.name : id}</div>`
+
+        const legend = this.content.getElementById("lms-chart-legend")
+        legend.style.setProperty('--xpad', this.config.xlegendpadding)
+        legend.style.setProperty('--ypad', this.config.ylegendpadding)
+        switch (this.config.legendposition) {
+            case 't':
+                legend.style['justify-content'] = 'center'
+                legend.style['align-items'] = 'flex-start'
+                break
+            case 'l':
+                legend.style['justify-content'] = 'flex-start'
+                legend.style['align-items'] = 'center'
+                break
+            case 'b':
+                legend.style['justify-content'] = 'center'
+                legend.style['align-items'] = 'flex-end'
+                break
+            case 'r':
+                legend.style['justify-content'] = 'flex-end'
+                legend.style['align-items'] = 'center'
+                break
+            case 'tl':
+            case 'lt':
+                legend.style['justify-content'] = 'flex-start'
+                legend.style['align-items'] = 'flex-start'
+                break
+            case 'tr':
+            case 'rt':
+                legend.style['justify-content'] = 'flex-end'
+                legend.style['align-items'] = 'flex-start'
+                break
+            case 'lb':
+            case 'bl':
+                legend.style['justify-content'] = 'flex-start'
+                legend.style['align-items'] = 'flex-end'
+                break
+            case 'rb':
+            case 'br':
+                legend.style['justify-content'] = 'flex-end'
+                legend.style['align-items'] = 'flex-end'
+                break
+            case 'none':
+                legend.style['display'] = 'none'
+                break
+            default:
+                legend.style['justify-content'] = 'flex-start'
+                legend.style['align-items'] = 'flex-start'
+                break
+            }
     }
 
     drawSegment(point, style, symbolsize) {
