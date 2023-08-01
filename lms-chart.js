@@ -9,9 +9,9 @@ class LmsChart extends HTMLElement {
     constructor() {
         super();
         let template = document.getElementById("lms-chart-template")
-        this.templatecontent = template.content.cloneNode(true)
-        const root = this.attachShadow({mode: "open"})
-        root.appendChild(this.templatecontent)
+        this.content = template.content.cloneNode(true)
+        const schatten = this.attachShadow({mode: "open"})
+        schatten.appendChild(this.content)
         try {
             this.create();
         }
@@ -89,10 +89,10 @@ class LmsChart extends HTMLElement {
 
         try {
             this.gridconfig = new LmsChartGridConfig(this.gridobject)
+            this.setCSSVariables()
             const lmschartcontainer = new LmsChartContainer(this)
             lmschartcontainer.appendDataPaths(this.xys)
             lmschartcontainer.appendFunctionPaths(this.functions)
-            this.sizeSlots()
         }
         catch(err) {
             if (err instanceof ChartError) {
@@ -104,21 +104,9 @@ class LmsChart extends HTMLElement {
         }
     }
 
-    sizeSlots() {
-        const xlabeltextele = this.shadowRoot.getElementById("lms-chart-xlabel")
-        xlabeltextele.style.width = `${this.gridconfig.width*this.gridconfig.xscale}cm`
-
-        const ylabeltextele = this.shadowRoot.getElementById("lms-chart-ylabel")
-        ylabeltextele.style.width = `${this.gridconfig.height*this.gridconfig.yscale}cm`
-        ylabeltextele.style.transform = 'rotate(-90deg)'
-
-        const titletextele = this.shadowRoot.getElementById("lms-chart-title")
-        titletextele.style.width = `${this.gridconfig.width*this.gridconfig.xscale}cm`
-
-        this.shadowRoot.querySelectorAll('.toberesized').forEach(element => {
-            element.setAttribute('width', `${this.gridconfig.totalwidth}cm`)
-            element.setAttribute('height', `${this.gridconfig.totalheight}cm`)
-        });
+    setCSSVariables() {
+        this.style.setProperty('--breite', `${this.gridconfig.totalwidth}cm`)
+        this.style.setProperty('--hoehe', `${this.gridconfig.totalheight}cm`)
     }
 
     parseGridAttribute(attr) {
@@ -257,50 +245,19 @@ class LmsChartContainer {
         this.gridconfig = parent.gridconfig
         const content = parent.shadowRoot
 
-        this.svg = content.getElementById("lms-chart")
-        const alles = content.getElementById('lms-alles')
         this.lmschartgrid = new LmsChartGrid(this.gridconfig, content)
         const lmschartachsen = new LmsChartAchsen(this.gridconfig, content)
 
-        this.svg.setAttribute("preserveAspectRatio", 'none')
-        this.xlabeltextele = content.getElementById("lms-chart-xlabel")
-        this.ylabeltextele = content.getElementById("lms-chart-ylabel")
-        this.titletextele = content.getElementById("lms-chart-title")
-
-        // Um die Achsenbeschriftung korrekt positionieren zu können, muss ich für einen
-        // Augenblick die Kontrolle an den Browser zurückgeben, damit er ein erstes Mal rendern kann.
-        // Dazu wird setTimeout mit einem Timeout von 0 aufgerufen. Das bewirkt, dass die folgende
-        // Funktion an das Ende der Queue gesetzt wird. Nun kann ich mit getBBox() alle Größen und
-        // Positionen auslesen. 
+//        // Um die Achsenbeschriftung korrekt positionieren zu können, muss ich für einen
+//        // Augenblick die Kontrolle an den Browser zurückgeben, damit er ein erstes Mal rendern kann.
+//        // Dazu wird setTimeout mit einem Timeout von 0 aufgerufen. Das bewirkt, dass die folgende
+//        // Funktion an das Ende der Queue gesetzt wird. Nun kann ich mit getBBox() alle Größen und
+//        // Positionen auslesen. 
         setTimeout(() => {
-            // Positioniere die Achsenbeschriftung
-            const gap = 3
-            const rect = lmschartachsen.svgelement.getBBox()
-            
-            const xlabelsize = this.getSizeFromStyle(parent.querySelector("*[slot=xlabel]"))
-            const ylabelsize = this.getSizeFromStyle(parent.querySelector("*[slot=ylabel]"))
-            const titlesize = this.getSizeFromStyle(parent.querySelector("*[slot=title]"))
-
-            this.xlabeltextele.style.transform = `translate(0, ${rect.height+rect.y}px)`
-            this.ylabeltextele.style.transform = `translate(${rect.x-ylabelsize.height-gap}px, ${this.gridconfig.height*this.gridconfig.yscale}cm) rotate(-90deg)`
-            this.titletextele.style.transform = `translate(0, ${-titlesize.height+rect.y}px)`
-
-            // Berechne die gesamte benötigte Höhe und Breite
-            const breite = ylabelsize.height + rect.width + gap
-            const hoehe = xlabelsize.height + rect.height + titlesize.height
-            this.svg.setAttribute("width", `${breite}px`)
-            this.svg.setAttribute("height", `${hoehe}px`)
-            alles.style.transform = `translate(${ylabelsize.height-rect.x+gap}px, ${-rect.y+titlesize.height}px)`
-        }, 0)
-    }
-
-    getSizeFromStyle(element) {
-        if (!element)
-            return { width: 0, height: 0}
-        const style = window.getComputedStyle(element)
-        const height = parseFloat(style.height)+parseFloat(style['margin-top'])+parseFloat(style['margin-bottom'])
-        const width = parseFloat(style.width)+parseFloat(style['margin-right'])+parseFloat(style['margin-left'])
-        return { width: width, height: height}
+            const ele = content.getElementById("lms-chart-ylabel")
+            const ylabelbreite = ele.getBoundingClientRect().width
+            this.parent.style.setProperty('--ylabelbreite', `${ylabelbreite}px`)
+        }, 1000)
     }
 
     appendDataPaths(xys) {
@@ -344,9 +301,6 @@ class LmsChartAchsen {
         this.yskalagap = '-0.2cm'
         this.linienbreite = 0.0352777778 // 1pt in cm
 
-        this.svgelement = this.content.getElementById("lms-chart-axis")
-
-        this.configureFrame()
         if (! this.config.xhideaxis)
             this.configureXaxis()
         if (! this.config.yhideaxis)
@@ -357,65 +311,48 @@ class LmsChartAchsen {
             this.configureYscale()
     }
 
-    configureFrame() {
-        const frame = this.content.getElementById("lms-chart-frame")
-        frame.setAttribute("width", `${this.config.totalwidth}cm`)
-        frame.setAttribute("height", `${this.config.totalheight}cm`)
-    }
-
     configureXscale() {
         const xskala = this.content.getElementById("lms-chart-x-scale")
         for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
             if (i != 0)
-                xskala.appendChild(this.scaletext(
-                    i.toLocaleString('de-DE'),
-                    `${i*this.config.xscale-this.config.totalxmin}cm`,
-                    `${this.config.totalheight}cm`,
-                    'text-before-edge',
-                    'middle'
-                ))
+                xskala.innerHTML += `<div class="xscale absolute" style="left: ${i*this.config.xscale-0.5*this.config.totalwidth-this.config.totalxmin}cm;">${i.toLocaleString('de-DE')}</div>`
         }
+        xskala.innerHTML += `<div class="xscalehidden">Mg</div>`
     }
 
     configureYscale() {
         const yskala = this.content.getElementById("lms-chart-y-scale")
         for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
-            if (i != 0)
-                yskala.appendChild(this.scaletext(
-                    i.toLocaleString('de-DE'),
-                    this.yskalagap,
-                    `${this.config.totalymax-i*this.config.yscale}cm`,
-                    'central',
-                    'end'
-                ))
+            if (i != 0) {
+                yskala.innerHTML += `<div class="yscale absolute" style="right: 0.5em; top: ${this.config.totalymax-i*this.config.yscale-0.5*this.config.totalheight}cm;">${i.toLocaleString('de-DE')}</div>`
+                yskala.innerHTML += `<div class="yscalehidden">${i.toLocaleString('de-DE')}</div>`
+            }
         }
-        this.svgelement.appendChild(yskala)
     }
 
-    scaletext(txt, x, y, baseline, anchor) {
-        const element = document.createElementNS("http://www.w3.org/2000/svg", "text")
-        element.setAttribute("x", x)
-        element.setAttribute("y", y)
-        element.style['dominant-baseline'] = baseline
-        element.style['text-anchor'] = anchor
+    scaletext(txt, x, y) {
+        const element = document.createElement("div")
+        element.classList.add("absolute")
+        element.style.left = x
+        element.style.top = y
         element.innerHTML = txt
         return element
     }
 
     configureXaxis() {
         const element = this.content.getElementById("lms-chart-x-axis")
-        element.setAttribute("x1", 0)
-        element.setAttribute("y1", `${this.config.totalymax}cm`)
-        element.setAttribute("x2", `${this.config.totalwidth-10*this.linienbreite}cm`)
-        element.setAttribute("y2", `${this.config.totalymax}cm`)
+        element.setAttribute("x1", this.config.totalxmin)
+        element.setAttribute("y1", this.config.totalymax)
+        element.setAttribute("x2", this.config.totalxmax-10*this.linienbreite)
+        element.setAttribute("y2", this.config.totalymax)
     }
 
     configureYaxis() {
         const element = this.content.getElementById("lms-chart-y-axis")
-        element.setAttribute("x1", `${-this.config.totalxmin}cm`)
-        element.setAttribute("y1",  `${this.config.totalheight}cm`)
-        element.setAttribute("x2", `${-this.config.totalxmin}cm`)
-        element.setAttribute("y2", `${10*this.linienbreite}cm`)
+        element.setAttribute("x1", 0)
+        element.setAttribute("y1",  this.config.totalheight)
+        element.setAttribute("x2", 0)
+        element.setAttribute("y2", 10*this.linienbreite)
     }
 }
 
@@ -435,6 +372,11 @@ class LmsChartGrid {
         this.svgelement.setAttribute("viewBox", `${this.config.totalxmin} 0 ${this.config.totalwidth} ${this.config.totalheight}`)
         this.svgelement.setAttribute("width", `${this.config.totalwidth}cm`)
         this.svgelement.setAttribute("height", `${this.config.totalheight}cm`)
+        this.frameelement = this.content.getElementById("lms-chart-frame")
+        this.frameelement.setAttribute("preserveAspectRatio", 'none')
+        this.frameelement.setAttribute("viewBox", `${this.config.totalxmin} 0 ${this.config.totalwidth} ${this.config.totalheight}`)
+        this.frameelement.setAttribute("width", `${this.config.totalwidth}cm`)
+        this.frameelement.setAttribute("height", `${this.config.totalheight}cm`)
 
         this.appendSubgrid()
         this.appendGrid()
