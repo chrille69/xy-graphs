@@ -35,6 +35,10 @@
                 stroke-width: 1.3pt;
                 vector-effect: non-scaling-stroke;
             }
+            .legenditem {
+                display: flex;
+                align-items: center;
+            }
             .axis {
                 fill: none;
                 stroke: black;
@@ -56,13 +60,20 @@
                 overflow: visible;
             }
             #lms-chart-legend {
-                position: absolute;
+                --xpad: 2mm;
+                --ypad: 2mm;
+                width: calc(100% - 2 * var(--xpad));
+                height: calc(100% - 2 * var(--ypad));
+                padding: var(--ypad) var(--xpad);
+                display: flex;
+                justify-content: flex-start;
+                align-items: flex-start;
+            }
+            #lms-chart-legend-container {
                 background-color: white;
                 padding: 1mm;
                 border: 0.5pt solid gray;
                 border-radius: 2mm;
-                top: 2mm;
-                left: 2mm;
             }
         </style>
         <div style="font-family: Courier">
@@ -82,7 +93,7 @@
                     <path class="grid"    id="lms-chart-grid"></path>
                     <path class="subgrid" id="lms-chart-subgrid"></path>
                 </svg>
-                <foreignObject class="toberesized" width="100%" height="100%"><div id="lms-chart-legend"></div></foreignObject>
+                <foreignObject class="toberesized" width="100%" height="100%"><div id="lms-chart-legend"><div id="lms-chart-legend-container"></div></div></foreignObject>
                 <g id="lms-chart-axis">
                     <rect id="lms-chart-frame" class="frame"></rect>
                     <line id="lms-chart-x-axis" class="axis" marker-end="url(#lmsarrow)"></line>
