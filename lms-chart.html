@@ -10,20 +10,31 @@
 <body>
     <template id="lms-chart-template">
         <style>
-            foreignObject {
-                overflow: visible;
+            :host {
+                --breite: 15cm;
+                --hoehe: 10cm;
+                --ylabelbreite: 19.984375px;
             }
-            .grid {
+            #lms-chart {
+                display: inline-grid;
+                grid-template-columns: auto auto auto;
+                grid-template-areas:
+                    ". . title"
+                    "ylabel yscale chart"
+                    ". . xscale"
+                    ". . xlabel";
+                position: relative;
+            }
+            .no-scaling-stroke {
+                vector-effect: non-scaling-stroke;
+            }
+            #lms-chart-grid, #lms-chart-subgrid {
                 fill: none;
                 stroke: grey;
                 stroke-width: 0.9pt;
-                vector-effect: non-scaling-stroke;
             }
-            .subgrid {
-                fill: none;
-                stroke: grey;
+            #lms-chart-subgrid {
                 stroke-width: 0.3pt;
-                vector-effect: non-scaling-stroke;
             }
             .datapath {
                 fill: none;
@@ -47,23 +58,28 @@
             .label {
                 text-align: center;
             }
-            .frame {
-                fill: none;
-                stroke: grey;
+            .absolute {
+                position: absolute;
             }
-            .error {
+            .relative {
+                position: relative;
+            }
+            .breite {
+                width: var(--breite);
+            }
+            .hoehe {
+                height:var(--hoehe)
+            }
+            #lms-chart-error {
                 background-color: red;
                 color: white;
                 font-family: 'Courier New', Courier, monospace;
             }
-            #lms-chart {
-                overflow: visible;
-            }
             #lms-chart-legend {
                 --xpad: 2mm;
                 --ypad: 2mm;
-                width: calc(100% - 2 * var(--xpad));
-                height: calc(100% - 2 * var(--ypad));
+                width: calc(var(--breite) - 2 * var(--xpad));
+                height: calc(var(--hoehe) - 2 * var(--ypad));
                 padding: var(--ypad) var(--xpad);
                 display: flex;
                 justify-content: flex-start;
@@ -75,39 +91,78 @@
                 border: 0.5pt solid gray;
                 border-radius: 2mm;
             }
+            #lms-chart-frame {
+                border: 1px solid grey;
+                overflow: visible;
+                grid-area: chart;
+            }
+            #lms-chart-title {
+                grid-area: title;
+            }
+            #lms-chart-xlabel {
+                grid-area: xlabel;
+            }
+            #lms-chart-ylabel {
+                grid-area: ylabel;
+                align-self: center;
+                width: var(--hoehe);
+                rotate: 270deg;
+                margin-left: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
+                margin-right: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
+            }
+            #chart-mit-overlay {
+                grid-area: chart;
+            }
+            #lms-chart-x-scale {
+                grid-area: xscale;
+            }
+            #lms-chart-y-scale {
+                grid-area: yscale;
+                padding: 0 0.5em;
+            }
+            .yscalehidden, .xscalehidden {
+                visibility: hidden;
+            }
+            .xscale {
+                width:100%;
+                text-align: center;
+                top: 0;
+            }
+            .yscale {
+                line-height: var(--hoehe);
+                vertical-align: middle;
+            }
         </style>
         <div style="font-family: Courier">
-            <div id="charterrorname" style="background-color: red; color: white"></div>
+            <div id="charterrorname" style="background-color: rgba(255, 0, 0, 0.747); color: white"></div>
             <div id="charterrormessage"></div>
             <pre id="charterrorstack"></pre>
         </div>
-        <svg id="lms-chart">
-            <defs>
-                <marker id="lmsarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
-                     refX="-10" refY="0" markerWidth="10" markerHeight="4" orient="auto">
-                    <path style="stroke: none;" d="M0 0 L -10 2 L -10 -2 z"></path>
-                </marker>
-            </defs>
-            <g id="lms-alles">
-                <svg id="lms-chart-graph">
-                    <path class="grid"    id="lms-chart-grid"></path>
-                    <path class="subgrid" id="lms-chart-subgrid"></path>
+        <div id="lms-chart">
+            <div id="lms-chart-title"><slot name="title" class="label breite"></slot></div>
+            <div id="lms-chart-xlabel"><slot name="xlabel" class="label breite"></slot></div>
+            <div id="lms-chart-ylabel"><div><slot name="ylabel"></slot></div></div>
+            <div id="lms-chart-y-scale" class="relative"></div>
+            <div id="lms-chart-x-scale" class="relative"></div>
+            <div id="chart-mit-overlay" class="relative breite hoehe">
+                <svg id="lms-chart-graph" class="absolute breite hoehe"></svg>
+                <svg id="lms-chart-frame" class="absolute breite hoehe">
+                    <defs>
+                        <marker id="lmsarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
+                             refX="-10" refY="0" markerWidth="10" markerHeight="4" orient="auto">
+                            <path style="stroke: none;" d="M0 0 L -10 2 L -10 -2 z"></path>
+                        </marker>
+                    </defs>
+                    <path class="no-scaling-stroke" id="lms-chart-grid"></path>
+                    <path class="no-scaling-stroke" id="lms-chart-subgrid"></path>
+                    <line id="lms-chart-x-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+                    <line id="lms-chart-y-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
                 </svg>
-                <foreignObject class="toberesized" width="100%" height="100%"><div id="lms-chart-legend"><div id="lms-chart-legend-container"></div></div></foreignObject>
-                <g id="lms-chart-axis">
-                    <rect id="lms-chart-frame" class="frame"></rect>
-                    <line id="lms-chart-x-axis" class="axis" marker-end="url(#lmsarrow)"></line>
-                    <line id="lms-chart-y-axis" class="axis" marker-end="url(#lmsarrow)"></line>
-                    <g id="lms-chart-x-scale"></g>
-                    <g id="lms-chart-y-scale"></g>
-                </g>
-                <foreignObject width="10cm" height="1px" class="label" id="lms-chart-title"><slot name="title"></slot></foreignObject>
-                <foreignObject width="10cm" height="1px" class="label" id="lms-chart-xlabel"><slot name="xlabel"></slot></foreignObject>
-                <foreignObject width="10cm" height="1px" class="label" id="lms-chart-ylabel"><slot name="ylabel"></slot></foreignObject>
-                <foreignObject class="toberesized" width="100%" height="100%"><div class="error"><slot name="error"></slot></div></foreignObject>
-                <foreignObject class="toberesized" width="100%" height="100%"><slot></slot></foreignObject>
-            </g>
-        </svg>
+                <div id="lms-chart-legend" class="absolute"><div id="lms-chart-legend-container"></div></div>
+                <div id="standardslot" class="absolute breite"></div>
+                <div id="lms-chart-error" class="absolute breite"></div>
+            </div>
+        </div>
     </template>
 </body>
 
