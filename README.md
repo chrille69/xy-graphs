@@ -77,3 +77,13 @@ lmschart stellt fünf Slots zur Verfügung, die in der folgenden Tabelle erklär
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
 
 ## SVG-Koordinaten und XY-Werte
+Für die Abbildung der Wertekoordinaten auf SVG-Koordinaten ist folgende Abbildung hilfreich:
+
+![image](https://github.com/chrille69/lmschart/assets/47904800/9737a11e-20aa-4230-9a62-b7f22590e872)
+
+Die schwarzen Achsen stellen das Koordinatensystem der XY-Werte dar, so wie sie normalerweise gezeichnet werden (Y-Achse nach oben).
+Die roten Achsen stellen das SVG-Koordinatensystem dar. Die Ursprünge und X-Achsen der beiden Koordinatensystem liegen übereinander.
+Die jeweiligen Achsen der XY-Werte und von SVG haben verschiedene Skalierungen xscale und yscale.
+
+Setzt man die viewBox von svg auf `xmin*xscale -ymax*yscale (xmax-xmin)*xscale (ymax-ymin)*yscale` kann man jedes XY-Wertepaar
+durch die Transformation `xsvg = x*xscale` und `ysvg = -y*yscale` abbilden.
