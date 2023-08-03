@@ -20,9 +20,41 @@ Attribute beginnen entweder mit `grid-`, `xy-` oder `function-`. `grid`-Attribut
 die Größe des Diagramms und die Skalierung der Achsen. Mit Hilfe der `xy`-Attribute können Messwertepaare dargestellt werden.
 `function`-Attribute dienen der Darstellung von Funktionsgraphen.
 
+#### Attribute für das Gitter
 | Attribut | Funktion | Beispiel | Standard |
 | --- | --- | --- | --- |
-| `grid-xmin` | Untere Intervallgrenze der x-Achse |  -4 | 0 |
-| `grid-xmax` | Obere Intervallgrenze der x-Achse |  8 | 10 |
-| `grid-delta` | Größe des Hauptkästchens in x-Werten |  5 | 1 |
-| `grid-xsize` | Größe des Hauptkästchens in cm |  2 | 1 |
+| `grid‑xmin`<br/>`grid‑ymin` | Untere Intervallgrenze der x- bzw. y-Werte |  -4 | 0 |
+| `grid‑xmax`<br/>`grid‑ymax` | Obere Intervallgrenze der x- bzw. y-Werte |  8 | 10 |
+| `grid‑xsize`<br/>`grid‑ysize` | Größe des Hauptkästchens in cm |  2 | 1 |
+| `grid‑xdelta`<br/>`grid‑ydelta` | Größe des Hauptgitters in x- bzw. y-Werten |  5 | 1 |
+| `grid‑xsubdelta`<br/>`grid‑ysubdelta` | Größe des Untergitters in x- bzw. y-Werten |  0.1 | .2 |
+| `grid‑xhidegrid`<br/>`grid‑yhidegrid` | Hauptgitter verbergen |  true | false |
+| `grid‑xhidesubgrid`<br/>`grid‑yhidesubgrid` | Untergitter verbergen |  true | false |
+| `grid‑xhidescale`<br/>`grid‑yhidescale` | Skalierung verbergen |  true | false |
+| `grid‑legendposition` | Platzierung der Legende im Diagramm (t, r, b, l, tr, tl, br, bl, none) | tr | tl |
+| `grid‑xlegendpadding`<br/>`grid‑ylegendpadding` | Padding in CSS-Koordinaten | 5mm | 2mm |
+
+#### Attribute für xy-Daten
+| Attribut | Funktion | Beispiel | Standard |
+| --- | --- | --- | --- |
+| `xy‑values‑[id]` | Wertepaare in x,y-Koordinaten für Graph der ID `id` als zweidimensionales JSON-Array. | [[0,0],[1,4],[2,6],[3,9]] | null |
+| `xy‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Messung mit Reibung | null |
+| `xy‑style‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
+| `xy‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
+| `xy‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
+| `xy‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | green | red |
+| `xy‑fillcolor‑[id]` | Die Füllfarbe des Graphen zur ID `id`.  | yellow | null |
+
+#### Attribute für Funktionen
+| Attribut | Funktion | Beispiel | Standard |
+| --- | --- | --- | --- |
+| `function‑expr‑[id]` | Mathematischer Ausdruck, der von math.js evaluiert werden kann. Muss x als Variable enthalten. | 2*sin(x) | null |
+| `function‑start‑[id]` | x-Startwert des Graphen mit der ID `id`. | -4 | 0 |
+| `function‑end‑[id]` | x-Endwert des Graphen mit der ID `id`. | 20 | 10 |
+| `function‑step‑[id]` | Schrittweite der x-Werte zum Graphen mit der ID `id`. | 0.02 | 0.1 |
+| `function‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Sinus | null |
+| `function‑style‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
+| `function‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
+| `function‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
+| `function‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | magenta | blue |
+| `function‑fillcolor‑[id]` | Die Füllfarbe des Graphen zur ID `id`.  | cyan | null |
