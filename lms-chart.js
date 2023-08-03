@@ -5,250 +5,6 @@ class ChartError extends Error {
     }
 }
 
-class LmsChart extends HTMLElement {
-    constructor() {
-        super();
-        let template = document.getElementById("lms-chart-template")
-        this.template = template.content.cloneNode(true)
-    }
-
-    connectedCallback() {
-        try {
-            this.create();
-        }
-        catch(err) {
-            this.template.getElementById('charterrorname').innerHTML = err.name
-            this.template.getElementById('charterrormessage').innerHTML = err.message
-            this.template.getElementById('charterrorstack').innerHTML = err.stack
-            this.template.getElementById('lms-chart').style.display = 'none'
-        }
-        finally {
-            const schatten = this.attachShadow({mode: "open"})
-            schatten.appendChild(this.template)
-
-            const tmpele = this.querySelector("[slot=ylabel]")
-            if (! tmpele) {
-                this.style.setProperty('--ylabelbreite', '0px')
-            }
-        }
-    }
-
-    create() {
-        this.configobject = {
-            xsize: 1,
-            ysize: 1,
-            xdelta: 1,
-            ydelta: 1,
-            xsubdelta: 0.2,
-            ysubdelta: 0.2,
-            xmin: 0,
-            xmax: 10,
-            ymin: 0,
-            ymax: 10,
-            xhidegrid: false,
-            yhidegrid: false,
-            xhidesubgrid: false,
-            yhidesubgrid: false,
-            xhideaxis: false,
-            yhideaxis: false,
-            xhidescale: false,
-            yhidescale: false,
-            legendposition: 'tl',
-            xlegendpadding: '2mm',
-            ylegendpadding: '2mm',
-        }
-        this.emptyfunction = {
-            expr: null,
-            start: 0,
-            end: 10,
-            step: 0.1,
-            fillcolor: null,
-            strokecolor: 'blue',
-            style: 'line',
-            linewidth: '1.3pt',
-            symbolsize: 0.15,
-            name: null
-        }
-        this.emptyxy = {
-            values: null,
-            fillcolor: null,
-            strokecolor: 'red',
-            style: 'line',
-            linewidth: '1.3pt',
-            symbolsize: 0.15,
-            name: null
-        }
-
-        this.gridkeys = Object.keys(this.configobject)
-        this.functionkeys = Object.keys(this.emptyfunction)
-        this.xykeys = Object.keys(this.emptyxy)
-
-        this.functions = {}
-        this.xys = {}
-        for (let attr of this.attributes) {
-            if (attr.name.startsWith('function-')) {
-                this.parseFunctionAttribute(attr)
-            }
-            else if (attr.name.startsWith('xy-')) {
-                this.parseXYAttribute(attr)
-            }
-            else if (attr.name.startsWith('grid-')) {
-                this.parseGridAttribute(attr)
-            }
-        }
-
-        try {
-            this.config = new LmsChartConfig(this.configobject)
-            this.setCSSVariables()
-            const lmschartcontainer = new LmsChartContainer(this)
-            lmschartcontainer.appendDataPaths(this.xys)
-            lmschartcontainer.appendFunctionPaths(this.functions)
-        }
-        catch(err) {
-            if (err instanceof ChartError) {
-                this.errormessage(err.message)
-            }
-            else {
-                throw err
-            }
-        }
-    }
-
-    setCSSVariables() {
-        this.style.setProperty('--breite', `${this.config.totalwidth}cm`)
-        this.style.setProperty('--hoehe', `${this.config.totalheight}cm`)
-    }
-
-    parseGridAttribute(attr) {
-        const attrinfo = attr.name.split('-')
-        if (attrinfo.length < 2) {
-            this.errormessage(`${attr.name}: Falsches Format. grid-[eigenschaft] gefordert.`)
-            return
-        }
-        if (attrinfo[1] == '') {
-            this.errormessage(`${attr.name}: Falsches Format. Eigenschaft fehlt.`)
-            return
-        }
-        
-        const gridprop = attrinfo[1]
-        if (! this.gridkeys.includes(gridprop)) {
-            this.errormessage(`${attr.name}: Erlaubte Eigenschaften: ${this.gridkeys.join(", ")}.`)
-            return
-        }
-        switch(gridprop) {
-            case 'xsize':
-            case 'ysize':
-            case 'xsize':
-            case 'ysize':
-            case 'xdelta':
-            case 'ydelta':
-            case 'xsubdelta':
-            case 'ysubdelta':
-            case 'xmin':
-            case 'xmax':
-            case 'ymin':
-            case 'ymax':
-                const number = Number(attr.value)
-                if (isNaN(number)) return
-                this.configobject[gridprop] = number
-                break;
-            case 'xhidegrid':
-            case 'yhidegrid':
-            case 'xhidesubgrid':
-            case 'yhidesubgrid':
-            case 'xhideaxis':
-            case 'yhideaxis':
-            case 'xhidescale':
-            case 'yhidescale':
-                this.configobject[gridprop] = ! ["0", "false"].includes(attr.value)
-                break;
-            default:
-                this.configobject[gridprop] = attr.value
-        }
-    }
-
-    parseFunctionAttribute(attr) {
-        const attrinfo = attr.name.split('-')
-        if (attrinfo.length != 3) {
-            this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
-            return
-        }
-        if (attrinfo[2] == '') {
-            this.errormessage(`${attr.name}: Falsches Format. id fehlt`)
-            return
-        }
-
-        const funcname = attrinfo[2]
-        const functyp = attrinfo[1]
-        if (! this.functionkeys.includes(functyp)) {
-            this.errormessage(`${attr.name}: Erlaubt sind nur ${this.functionkeys.join(', ')}`)
-            return
-        }
-
-        if (!(funcname in this.functions))
-            this.functions[funcname] = {...this.emptyfunction}
-
-        switch(functyp) {
-            case 'start':
-            case 'end':
-            case 'step':
-            case 'symbolsize':
-                const number = Number(attr.value)
-                if (isNaN(number)) return
-                this.functions[funcname][functyp] = number
-                break;
-            default:
-                this.functions[funcname][functyp] = attr.value
-        }
-    }
-
-    parseXYAttribute(attr) {
-        const attrinfo = attr.name.split('-')
-        if (attrinfo.length != 3) {
-            this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
-            return
-        }
-        if (attrinfo[2] == '') {
-            this.errormessage(`${attr.name}: Falsches Format. id fehlt`)
-            return
-        }
-
-        const xyname = attrinfo[2]
-        const xytyp = attrinfo[1]
-        if (! this.xykeys.includes(xytyp)) {
-            this.errormessage(`${attr.name}: Falscher typ. Erlaubt sind nur ${this.xykeys.join(', ')}`)
-            return
-        }
-
-        if (!(xyname in this.xys))
-            this.xys[xyname] = {...this.emptyxy}
-
-        switch(xytyp) {
-            case 'values':
-                try {
-                    this.xys[xyname][xytyp] = JSON.parse(attr.value)
-                }
-                catch(err) {
-                    this.errormessage(err)
-                }
-                break;
-            case 'symbolsize':
-                const number = Number(attr.value)
-                if (isNaN(number)) return
-                this.xys[xyname][xytyp] = number
-                break;
-            default:
-                this.xys[xyname][xytyp] = attr.value
-        }
-    }
-
-    errormessage(msg) {
-        this.innerHTML += `<div slot="error">${msg}</div>`
-    }
-}
-
-customElements.define('lms-chart', LmsChart);
-
 class LmsChartContainer {
     constructor(parent) {
         this.parent = parent
@@ -619,3 +375,247 @@ class LmsChartConfig {
         this.totalymax = this.ymax*this.yscale
     }
 }
+
+class LmsChart extends HTMLElement {
+    constructor() {
+        super();
+        let template = document.getElementById("lms-chart-template")
+        this.template = template.content.cloneNode(true)
+    }
+
+    connectedCallback() {
+        try {
+            this.create();
+        }
+        catch(err) {
+            this.template.getElementById('charterrorname').innerHTML = err.name
+            this.template.getElementById('charterrormessage').innerHTML = err.message
+            this.template.getElementById('charterrorstack').innerHTML = err.stack
+            this.template.getElementById('lms-chart').style.display = 'none'
+        }
+        finally {
+            const schatten = this.attachShadow({mode: "open"})
+            schatten.appendChild(this.template)
+
+            const tmpele = this.querySelector("[slot=ylabel]")
+            if (! tmpele) {
+                this.style.setProperty('--ylabelbreite', '0px')
+            }
+        }
+    }
+
+    create() {
+        this.configobject = {
+            xsize: 1,
+            ysize: 1,
+            xdelta: 1,
+            ydelta: 1,
+            xsubdelta: 0.2,
+            ysubdelta: 0.2,
+            xmin: 0,
+            xmax: 10,
+            ymin: 0,
+            ymax: 10,
+            xhidegrid: false,
+            yhidegrid: false,
+            xhidesubgrid: false,
+            yhidesubgrid: false,
+            xhideaxis: false,
+            yhideaxis: false,
+            xhidescale: false,
+            yhidescale: false,
+            legendposition: 'tl',
+            xlegendpadding: '2mm',
+            ylegendpadding: '2mm',
+        }
+        this.emptyfunction = {
+            expr: null,
+            start: 0,
+            end: 10,
+            step: 0.1,
+            fillcolor: null,
+            strokecolor: 'blue',
+            style: 'line',
+            linewidth: '1.3pt',
+            symbolsize: 0.15,
+            name: null
+        }
+        this.emptyxy = {
+            values: null,
+            fillcolor: null,
+            strokecolor: 'red',
+            style: 'line',
+            linewidth: '1.3pt',
+            symbolsize: 0.15,
+            name: null
+        }
+
+        this.gridkeys = Object.keys(this.configobject)
+        this.functionkeys = Object.keys(this.emptyfunction)
+        this.xykeys = Object.keys(this.emptyxy)
+
+        this.functions = {}
+        this.xys = {}
+        for (let attr of this.attributes) {
+            if (attr.name.startsWith('function-')) {
+                this.parseFunctionAttribute(attr)
+            }
+            else if (attr.name.startsWith('xy-')) {
+                this.parseXYAttribute(attr)
+            }
+            else if (attr.name.startsWith('grid-')) {
+                this.parseGridAttribute(attr)
+            }
+        }
+
+        try {
+            this.config = new LmsChartConfig(this.configobject)
+            this.setCSSVariables()
+            const lmschartcontainer = new LmsChartContainer(this)
+            lmschartcontainer.appendDataPaths(this.xys)
+            lmschartcontainer.appendFunctionPaths(this.functions)
+        }
+        catch(err) {
+            if (err instanceof ChartError) {
+                this.errormessage(err.message)
+            }
+            else {
+                throw err
+            }
+        }
+    }
+
+    setCSSVariables() {
+        this.style.setProperty('--breite', `${this.config.totalwidth}cm`)
+        this.style.setProperty('--hoehe', `${this.config.totalheight}cm`)
+    }
+
+    parseGridAttribute(attr) {
+        const attrinfo = attr.name.split('-')
+        if (attrinfo.length < 2) {
+            this.errormessage(`${attr.name}: Falsches Format. grid-[eigenschaft] gefordert.`)
+            return
+        }
+        if (attrinfo[1] == '') {
+            this.errormessage(`${attr.name}: Falsches Format. Eigenschaft fehlt.`)
+            return
+        }
+        
+        const gridprop = attrinfo[1]
+        if (! this.gridkeys.includes(gridprop)) {
+            this.errormessage(`${attr.name}: Erlaubte Eigenschaften: ${this.gridkeys.join(", ")}.`)
+            return
+        }
+        switch(gridprop) {
+            case 'xsize':
+            case 'ysize':
+            case 'xsize':
+            case 'ysize':
+            case 'xdelta':
+            case 'ydelta':
+            case 'xsubdelta':
+            case 'ysubdelta':
+            case 'xmin':
+            case 'xmax':
+            case 'ymin':
+            case 'ymax':
+                const number = Number(attr.value)
+                if (isNaN(number)) return
+                this.configobject[gridprop] = number
+                break;
+            case 'xhidegrid':
+            case 'yhidegrid':
+            case 'xhidesubgrid':
+            case 'yhidesubgrid':
+            case 'xhideaxis':
+            case 'yhideaxis':
+            case 'xhidescale':
+            case 'yhidescale':
+                this.configobject[gridprop] = ! ["0", "false"].includes(attr.value)
+                break;
+            default:
+                this.configobject[gridprop] = attr.value
+        }
+    }
+
+    parseFunctionAttribute(attr) {
+        const attrinfo = attr.name.split('-')
+        if (attrinfo.length != 3) {
+            this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
+            return
+        }
+        if (attrinfo[2] == '') {
+            this.errormessage(`${attr.name}: Falsches Format. id fehlt`)
+            return
+        }
+
+        const funcname = attrinfo[2]
+        const functyp = attrinfo[1]
+        if (! this.functionkeys.includes(functyp)) {
+            this.errormessage(`${attr.name}: Erlaubt sind nur ${this.functionkeys.join(', ')}`)
+            return
+        }
+
+        if (!(funcname in this.functions))
+            this.functions[funcname] = {...this.emptyfunction}
+
+        switch(functyp) {
+            case 'start':
+            case 'end':
+            case 'step':
+            case 'symbolsize':
+                const number = Number(attr.value)
+                if (isNaN(number)) return
+                this.functions[funcname][functyp] = number
+                break;
+            default:
+                this.functions[funcname][functyp] = attr.value
+        }
+    }
+
+    parseXYAttribute(attr) {
+        const attrinfo = attr.name.split('-')
+        if (attrinfo.length != 3) {
+            this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
+            return
+        }
+        if (attrinfo[2] == '') {
+            this.errormessage(`${attr.name}: Falsches Format. id fehlt`)
+            return
+        }
+
+        const xyname = attrinfo[2]
+        const xytyp = attrinfo[1]
+        if (! this.xykeys.includes(xytyp)) {
+            this.errormessage(`${attr.name}: Falscher typ. Erlaubt sind nur ${this.xykeys.join(', ')}`)
+            return
+        }
+
+        if (!(xyname in this.xys))
+            this.xys[xyname] = {...this.emptyxy}
+
+        switch(xytyp) {
+            case 'values':
+                try {
+                    this.xys[xyname][xytyp] = JSON.parse(attr.value)
+                }
+                catch(err) {
+                    this.errormessage(err)
+                }
+                break;
+            case 'symbolsize':
+                const number = Number(attr.value)
+                if (isNaN(number)) return
+                this.xys[xyname][xytyp] = number
+                break;
+            default:
+                this.xys[xyname][xytyp] = attr.value
+        }
+    }
+
+    errormessage(msg) {
+        this.innerHTML += `<div slot="error">${msg}</div>`
+    }
+}
+
+customElements.define('lms-chart', LmsChart);
