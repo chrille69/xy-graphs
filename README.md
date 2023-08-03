@@ -1,5 +1,12 @@
 # lmschart
-Custom-HTML-Element zum Darstellen von XY-Daten und Funktionsgraphen.
+Custom-HTML-Element zum Darstellen von XY-Daten und Funktionsgraphen. Es wurde besonderes Augenmerk auf das Hauptgitter gelegt: Es soll in
+Zentimeter-Einheiten erstellt werden. Achtet man beim Ausdrucken darauf, dass der Druckertreiber keine Skalierungen mehr vornimmt, wird
+das Hauptgitter auf dem Blatt in Zentimetereinheiten gedruckt.
+
+## Voraussetzungen
+Es ist ein einigermaßen moderner Browser mit Javascript- und SVG-Unterstützung von Nöten. Die Berechnungen, die für die Erstellung
+von Funktionsgraphen benötigt werden, werden mit Hilfe der Funktion [evaluate](https://mathjs.org/docs/expressions/parsing.html#evaluate)
+von [mathjs](https://mathjs.org/) vorgenommen.
 
 ## Beschreibung
 Diese kleine Bibliothek stellt XY-Daten und Funktionsgraphen nur mit Hilfe von HTML
