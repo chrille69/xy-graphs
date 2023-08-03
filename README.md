@@ -75,3 +75,5 @@ lmschart stellt fünf Slots zur Verfügung, die in der folgenden Tabelle erklär
 | `xlabel` | Die Beschriftung der x-Achse. | `<div slot="xlabel">Spannung U in V</div>` |
 | `ylabel` | Die Beschriftung der y-Achse. | `<div slot="ylabel">Stromstärke I in A</div>` |
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
+
+## SVG-Koordinaten und XY-Werte
