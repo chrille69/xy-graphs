@@ -377,14 +377,11 @@ class LmsChartConfig {
 }
 
 class LmsChart extends HTMLElement {
-    constructor() {
-        super();
-        let template = document.getElementById("lms-chart-template")
-        this.template = template.content.cloneNode(true)
-    }
 
     connectedCallback() {
         try {
+            let template = document.getElementById("lms-chart-template")
+            this.template = template.content.cloneNode(true)
             this.create();
         }
         catch(err) {
