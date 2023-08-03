@@ -58,3 +58,13 @@ die Größe des Diagramms und die Skalierung der Achsen. Mit Hilfe der `xy`-Attr
 | `function‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
 | `function‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | magenta | blue |
 | `function‑fillcolor‑[id]` | Die Füllfarbe des Graphen zur ID `id`.  | cyan | null |
+
+### Slots
+lmschart stellt fünf Slots zur Verfügung, die in der folgenden Tabelle erklärt sind.
+| Slot | Funktion | Beispiel |
+| --- | --- | --- |
+| standardslot | Wird direkt auf dem Diagramm dargestellt | |
+| `title` | Die Überschrift des Diagramms. | `<div slot="title">Röntgenspektrum</div>` |
+| `xlabel` | Die Beschriftung der x-Achse. | `<div slot="xlabel">Spannung U in V</div>` |
+| `ylabel` | Die Beschriftung der y-Achse. | `<div slot="ylabel">Stromstärke I in A</div>` |
+| `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
