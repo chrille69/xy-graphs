@@ -76,14 +76,18 @@ lmschart stellt fünf Slots zur Verfügung, die in der folgenden Tabelle erklär
 | `ylabel` | Die Beschriftung der y-Achse. | `<div slot="ylabel">Stromstärke I in A</div>` |
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
 
-## SVG-Koordinaten und XY-Werte
+## SVG-Koordinaten und reale Werte
 Für die Abbildung der Wertekoordinaten auf SVG-Koordinaten ist folgende Abbildung hilfreich:
 
-![image](https://github.com/chrille69/lmschart/assets/47904800/9737a11e-20aa-4230-9a62-b7f22590e872)
+<img src="https://github.com/chrille69/lmschart/assets/47904800/f33a473c-4c48-454e-bab9-1a98f43a7611" width="50%" >
 
-Die schwarzen Achsen stellen das Koordinatensystem der XY-Werte dar, so wie sie normalerweise gezeichnet werden (Y-Achse nach oben).
-Die roten Achsen stellen das SVG-Koordinatensystem dar. Die Ursprünge und X-Achsen der beiden Koordinatensystem liegen übereinander.
-Die jeweiligen Achsen der XY-Werte und von SVG haben verschiedene Skalierungen xscale und yscale.
+Die schwarzen Achsen stellen das Koordinatensystem der realen Werte dar, so wie es normalerweise gezeichnet wird (Y-Achse nach oben).
+Die roten Achsen stellen das SVG-Koordinatensystem dar. Die Ursprünge und X-Achsen der beiden Koordinatensysteme liegen übereinander.
+Die jeweiligen Achsen der realen Werte und von SVG haben verschiedene Skalierungen `xscale` und `yscale`. Ein Punkt im realen
+Koordinatensystem soll die Koordinaten `xr` und `yr` haben. Dann hat der gleiche Punkt im SVG-Koordinatensystem die Koordinaten
+`xr*xscale` und `-yr*yscale`.
 
-Setzt man die viewBox von svg auf `xmin*xscale -ymax*yscale (xmax-xmin)*xscale (ymax-ymin)*yscale` kann man jedes XY-Wertepaar
-durch die Transformation `xsvg = x*xscale` und `ysvg = -y*yscale` abbilden.
+Mit Hilfe der SVG-Attribute `width`, `height` und `viewBox` lässt sich der sichtbare Ausschnitt und die Größe der SVG-Abbildung
+einstellen. Die Breite wird auf `(xrmax - xrmin)cm` und die Höhe auf `(yrmax - yrmin)cm` gesetzt. Das Attribut `viewBox` muss in
+SVG-Koordinaten angegeben werden. Anhand der Abbildung erkennt man die Parameter
+`xmin*xscale -ymax*yscale (xrmax - xrmin)*xscale (yrmax - yrmin)*yscale`.
