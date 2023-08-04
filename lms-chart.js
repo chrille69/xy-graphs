@@ -155,7 +155,7 @@ lmsChartTemplate.innerHTML = `<style>
             <line id="lms-chart-x-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
             <line id="lms-chart-y-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
         </svg>
-        <div id="lms-chart-legend" class="absolute"><div id="lms-chart-legend-container"></div></div>
+        <div id="lms-chart-legend" class="absolute"><div id="lms-chart-legend-container"><slot name="legend-before"></slot><div id="lms-chart-legend-list"></div><slot name="legend-after"></slot></div></div>
         <div id="standardslot" class="absolute breite"><slot></slot></div>
         <div id="lms-chart-error" class="absolute breite"><slot name="error"></slot></div>
     </div>
@@ -186,10 +186,11 @@ class LmsChartContainer {
     }
 
     appendDataPaths(xys) {
-        for (let bezeichnung in xys ) {
+        for (let id in xys ) {
             try {
-                this.lmschartsvg.appendLegendItem(bezeichnung, xys[bezeichnung])
-                this.lmschartsvg.appendDataPath(bezeichnung, xys[bezeichnung])
+                if (! xys[id]['nolegend'])
+                    this.lmschartsvg.appendLegendItem(id, xys[id])
+                this.lmschartsvg.appendDataPath(id, xys[id])
             }
             catch(err) {
                 if (err instanceof ChartError)
@@ -201,10 +202,11 @@ class LmsChartContainer {
     }
 
     appendFunctionPaths(functions) {
-        for (let bezeichnung in functions ) {
+        for (let id in functions ) {
             try {
-                this.lmschartsvg.appendLegendItem(bezeichnung, functions[bezeichnung])
-                this.lmschartsvg.appendFunctionPath(bezeichnung, functions[bezeichnung])
+                if (! functions[id]['nolegend'])
+                    this.lmschartsvg.appendLegendItem(id, functions[id])
+                this.lmschartsvg.appendFunctionPath(id, functions[id])
             }
             catch(err) {
                 if (err instanceof ChartError)
@@ -289,7 +291,7 @@ class LmsChartContainer {
 class LmsChartSvg {
     constructor(parent) {
         this.config = parent.config
-        this.legendcontainer = parent.element.getElementById("lms-chart-legend-container")
+        this.legendcontainer = parent.element.getElementById("lms-chart-legend-list")
         this.svg = parent.element.getElementById("lms-chart-svg")
 
         this.svg.setAttribute("preserveAspectRatio", 'none')
@@ -597,6 +599,7 @@ class LmsChart extends HTMLElement {
             style: 'line',
             linewidth: '1.3pt',
             symbolsize: 0.15,
+            nolegend: false,
             name: null
         }
         this.emptyxy = {
@@ -606,6 +609,7 @@ class LmsChart extends HTMLElement {
             style: 'line',
             linewidth: '1.3pt',
             symbolsize: 0.15,
+            nolegend: false,
             name: null
         }
 
@@ -727,6 +731,9 @@ class LmsChart extends HTMLElement {
                 if (isNaN(number)) return
                 this.functions[funcname][functyp] = number
                 break;
+            case 'nolegend':
+                this.functions[funcname][functyp] = ! ["0", "false"].includes(attr.value)
+                break;
             default:
                 this.functions[funcname][functyp] = attr.value
         }
@@ -767,6 +774,9 @@ class LmsChart extends HTMLElement {
                 if (isNaN(number)) return
                 this.xys[xyname][xytyp] = number
                 break;
+            case 'nolegend':
+                this.xys[xyname][xytyp] = ! ["0", "false"].includes(attr.value)
+                break;
             default:
                 this.xys[xyname][xytyp] = attr.value
         }
@@ -778,3 +788,4 @@ class LmsChart extends HTMLElement {
 }
 
 customElements.define('lms-chart', LmsChart);
+
