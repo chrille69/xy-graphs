@@ -9,9 +9,10 @@ von Funktionsgraphen benötigt werden, werden mit Hilfe der Funktion [evaluate](
 von [mathjs](https://mathjs.org/) vorgenommen.
 
 ## Installation
-Lade die Datei lms-chart.js in ein geeignetes Verzeichnis und füge im `head` deines HTML-Dokuments folgende Zeile ein.
+Lade die Datei lms-chart.js in ein geeignetes Verzeichnis und füge im `head` deines HTML-Dokuments folgende Zeilen ein.
 
 ```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.9.0/math.min.js"></script>
 <script src="/pfad/zu/lms-chart.js"></script>
 ```
 
