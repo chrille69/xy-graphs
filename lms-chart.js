@@ -26,12 +26,7 @@ lmsChartTemplate.innerHTML = `<style>
     #lms-chart-subgrid {
         stroke-width: 0.3pt;
     }
-    .datapath {
-        fill: none;
-        stroke-width: 1.3pt;
-        vector-effect: non-scaling-stroke;
-    }
-    .functionpath {
+    .graphpath {
         fill: none;
         stroke-width: 1.3pt;
         vector-effect: non-scaling-stroke;
@@ -185,28 +180,12 @@ class LmsChartContainer {
         this.positionLegend()
     }
 
-    appendDataPaths(xys) {
-        for (let id in xys ) {
+    appendGraphPaths(graphs) {
+        for (let id in graphs ) {
             try {
-                if (! xys[id]['nolegend'])
-                    this.lmschartsvg.appendLegendItem(id, xys[id])
-                this.lmschartsvg.appendDataPath(id, xys[id])
-            }
-            catch(err) {
-                if (err instanceof ChartError)
-                    this.parent.errormessage(err)
-                else
-                    throw err
-            }
-        }
-    }
-
-    appendFunctionPaths(functions) {
-        for (let id in functions ) {
-            try {
-                if (! functions[id]['nolegend'])
-                    this.lmschartsvg.appendLegendItem(id, functions[id])
-                this.lmschartsvg.appendFunctionPath(id, functions[id])
+                if (! graphs[id]['nolegend'])
+                    this.lmschartsvg.appendLegendItem(id, graphs[id])
+                this.lmschartsvg.appendGraphPath(id, graphs[id])
             }
             catch(err) {
                 if (err instanceof ChartError)
@@ -358,6 +337,23 @@ class LmsChartSvg {
         }
     }
 
+    appendGraphPath(id, graphinfo) {
+        let dpath =''
+        if (graphinfo['values'] !== null)
+            dpath += this.appendDataPath(id, graphinfo)
+        if (graphinfo['expr'] !== null)
+            dpath += this.appendFunctionPath(id, graphinfo)
+        
+        const element = document.createElementNS("http://www.w3.org/2000/svg", "path")
+        element.classList.add('graphpath')
+        element.style['stroke'] = graphinfo.strokecolor
+        element.style['fill'] = graphinfo.fillcolor
+        element.style['stroke-width'] = graphinfo.linewidth
+        element.style['clip-path'] = 'url(#clipgraph)'
+        element.setAttribute("d", dpath)
+        this.svg.appendChild(element)
+    }
+
     appendDataPath(id, xyinfo) {
         let point
         if (!xyinfo.values)
@@ -370,24 +366,23 @@ class LmsChartSvg {
             point = this.tupelToPoint(xyinfo.values[i])
             dpath += this.drawSegment(point, xyinfo.style, xyinfo.symbolsize)
         }
-        const element = document.createElementNS("http://www.w3.org/2000/svg", "path")
-        element.classList.add('datapath')
-        element.style['stroke'] = xyinfo.strokecolor
-        element.style['fill'] = xyinfo.fillcolor
-        element.style['stroke-width'] = xyinfo.linewidth
-        element.style['clip-path'] = 'url("#clipgraph")'
-        element.setAttribute("d", dpath)
-        this.svg.appendChild(element)
+        return dpath
     }
 
     appendFunctionPath(id, funcinfo) {
         let tupel = []
         let dpath = ''
         let point
+        if (funcinfo.start === null)
+            funcinfo.start = this.config.xmin
         if (isNaN(funcinfo.start))
             throw new ChartError(`function (id=${id}): start ${funcinfo.start} ist keine Zahl.`)
+        if (funcinfo.end === null)
+            funcinfo.end = this.config.xmax
         if (isNaN(funcinfo.end))
             throw new ChartError(`function (id=${id}): end ${funcinfo.end} ist keine Zahl.`)
+        if (funcinfo.step === null)
+            funcinfo.step = this.config.xsubdelta
         if (isNaN(funcinfo.step))
             throw new ChartError(`function (id=${id}): end ${funcinfo.step} ist keine Zahl.`)
         if (funcinfo.step == 0)
@@ -420,14 +415,8 @@ class LmsChartSvg {
             point = this.tupelToPoint(tupel)
             dpath += this.drawSegment(point, funcinfo.style, funcinfo.symbolsize)
         }
-        const element = document.createElementNS("http://www.w3.org/2000/svg", "path")
-        element.classList.add('functionpath')
-        element.style['stroke'] = funcinfo.strokecolor
-        element.style['fill'] = funcinfo.fillcolor
-        element.style['stroke-width'] = funcinfo.linewidth
-        element.style['clip-path'] = 'url(#clipgraph)'
-        element.setAttribute("d", dpath)
-        this.svg.appendChild(element)
+
+        return dpath
     }
 
     appendLegendItem(id, info) {
@@ -451,7 +440,7 @@ class LmsChartSvg {
             d = `M${this.drawSegment({x: 0, y: 0})}`
             d += this.drawSegment({x: 0, y: 0}, info.style, symbolsize)
         }
-        path.classList.add('datapath')
+        path.classList.add('graphpath')
         path.setAttribute('d', d)
         path.style['stroke'] = info.strokecolor
         path.style['fill'] = info.fillcolor
@@ -589,11 +578,12 @@ class LmsChart extends HTMLElement {
             xlegendpadding: '2mm',
             ylegendpadding: '2mm',
         }
-        this.emptyfunction = {
+        this.emptygraph = {
+            values: null,
             expr: null,
-            start: 0,
-            end: 10,
-            step: 0.1,
+            start: null,
+            end: null,
+            step: null,
             fillcolor: null,
             strokecolor: 'blue',
             style: 'line',
@@ -602,29 +592,14 @@ class LmsChart extends HTMLElement {
             nolegend: false,
             name: null
         }
-        this.emptyxy = {
-            values: null,
-            fillcolor: null,
-            strokecolor: 'red',
-            style: 'line',
-            linewidth: '1.3pt',
-            symbolsize: 0.15,
-            nolegend: false,
-            name: null
-        }
 
         this.gridkeys = Object.keys(this.configobject)
-        this.functionkeys = Object.keys(this.emptyfunction)
-        this.xykeys = Object.keys(this.emptyxy)
+        this.graphkeys = Object.keys(this.emptygraph)
 
-        this.functions = {}
-        this.xys = {}
+        this.graphs = {}
         for (let attr of this.attributes) {
-            if (attr.name.startsWith('function-')) {
-                this.parseFunctionAttribute(attr)
-            }
-            else if (attr.name.startsWith('xy-')) {
-                this.parseXYAttribute(attr)
+            if (attr.name.startsWith('graph-')) {
+                this.parseGraphAttribute(attr)
             }
             else if (attr.name.startsWith('grid-')) {
                 this.parseGridAttribute(attr)
@@ -635,8 +610,7 @@ class LmsChart extends HTMLElement {
             this.config = new LmsChartConfig(this.configobject)
             this.setCSSVariables()
             const lmschartcontainer = new LmsChartContainer(this)
-            lmschartcontainer.appendDataPaths(this.xys)
-            lmschartcontainer.appendFunctionPaths(this.functions)
+            lmschartcontainer.appendGraphPaths(this.graphs)
         }
         catch(err) {
             if (err instanceof ChartError) {
@@ -701,7 +675,7 @@ class LmsChart extends HTMLElement {
         }
     }
 
-    parseFunctionAttribute(attr) {
+    parseGraphAttribute(attr) {
         const attrinfo = attr.name.split('-')
         if (attrinfo.length != 3) {
             this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
@@ -712,73 +686,37 @@ class LmsChart extends HTMLElement {
             return
         }
 
-        const funcname = attrinfo[2]
-        const functyp = attrinfo[1]
-        if (! this.functionkeys.includes(functyp)) {
-            this.errormessage(`${attr.name}: Erlaubt sind nur ${this.functionkeys.join(', ')}`)
+        const graphid = attrinfo[2]
+        const graphprop = attrinfo[1]
+        if (! this.graphkeys.includes(graphprop)) {
+            this.errormessage(`${attr.name}: Erlaubt sind nur ${this.graphkeys.join(', ')}`)
             return
         }
 
-        if (!(funcname in this.functions))
-            this.functions[funcname] = {...this.emptyfunction}
+        if (!(graphid in this.graphs))
+            this.graphs[graphid] = {...this.emptygraph}
 
-        switch(functyp) {
-            case 'start':
-            case 'end':
-            case 'step':
-            case 'symbolsize':
-                const number = Number(attr.value)
-                if (isNaN(number)) return
-                this.functions[funcname][functyp] = number
-                break;
-            case 'nolegend':
-                this.functions[funcname][functyp] = ! ["0", "false"].includes(attr.value)
-                break;
-            default:
-                this.functions[funcname][functyp] = attr.value
-        }
-    }
-
-    parseXYAttribute(attr) {
-        const attrinfo = attr.name.split('-')
-        if (attrinfo.length != 3) {
-            this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
-            return
-        }
-        if (attrinfo[2] == '') {
-            this.errormessage(`${attr.name}: Falsches Format. id fehlt`)
-            return
-        }
-
-        const xyname = attrinfo[2]
-        const xytyp = attrinfo[1]
-        if (! this.xykeys.includes(xytyp)) {
-            this.errormessage(`${attr.name}: Falscher typ. Erlaubt sind nur ${this.xykeys.join(', ')}`)
-            return
-        }
-
-        if (!(xyname in this.xys))
-            this.xys[xyname] = {...this.emptyxy}
-
-        switch(xytyp) {
+        switch(graphprop) {
             case 'values':
                 try {
-                    this.xys[xyname][xytyp] = JSON.parse(attr.value)
+                    this.graphs[graphid][graphprop] = JSON.parse(attr.value)
                 }
                 catch(err) {
                     this.errormessage(err)
                 }
                 break;
+            case 'start':
+            case 'end':
+            case 'step':
             case 'symbolsize':
                 const number = Number(attr.value)
-                if (isNaN(number)) return
-                this.xys[xyname][xytyp] = number
+                this.graphs[graphid][graphprop] = number
                 break;
             case 'nolegend':
-                this.xys[xyname][xytyp] = ! ["0", "false"].includes(attr.value)
+                this.graphs[graphid][graphprop] = ! ["0", "false"].includes(attr.value)
                 break;
             default:
-                this.xys[xyname][xytyp] = attr.value
+                this.graphs[graphid][graphprop] = attr.value
         }
     }
 
@@ -788,4 +726,3 @@ class LmsChart extends HTMLElement {
 }
 
 customElements.define('lms-chart', LmsChart);
-
