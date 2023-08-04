@@ -24,7 +24,7 @@ in einem Diagramm dar. Das Diagramm wird mit SVG erzeugt. Achsenbeschriftung und
 werden mit CSS-grid platziert.
 
 ```html
-<lms-chart function-expr-1="x^2"></lms-chart>
+<lms-chart graph-expr-1="x^2"></lms-chart>
 ```
 
 erzeugt das folgende Diagramm:
@@ -35,11 +35,11 @@ Skalierung, Koordinatengitter und Wertebereiche lassen sich mit HTML-Attributen 
 des Diagramms können mit Hilfe von Slots angegeben werden. Der Standardslot wird direkt auf das Diagramm platziert.
 
 ### Attribute
-Attribute beginnen entweder mit `grid-`, `xy-` oder `function-`. `grid`-Attribute konfigurieren das Koordinatengitter,
-die Größe des Diagramms und die Skalierung der Achsen. Mit Hilfe der `xy`-Attribute können Messwertepaare dargestellt werden.
-`function`-Attribute dienen der Darstellung von Funktionsgraphen.
+Attribute, die für dieses Template relevant sind, beginnen entweder mit `grid-` oder `graph-`.
 
 #### Attribute für das Gitter
+ `grid`-Attribute konfigurieren das Koordinatengitter, die Größe des Diagramms und die Skalierung der Achsen.
+ 
 | Attribut | Funktion | Beispiel | Standard |
 | --- | --- | --- | --- |
 | `grid‑xmin`<br/>`grid‑ymin` | Untere Intervallgrenze der x- bzw. y-Werte |  -4 | 0 |
@@ -53,35 +53,27 @@ die Größe des Diagramms und die Skalierung der Achsen. Mit Hilfe der `xy`-Attr
 | `grid‑legendposition` | Platzierung der Legende im Diagramm (t, r, b, l, tr, tl, br, bl, none) | tr | tl |
 | `grid‑xlegendpadding`<br/>`grid‑ylegendpadding` | Padding in CSS-Koordinaten | 5mm | 2mm |
 
-#### Attribute für xy-Daten
-| Attribut | Funktion | Beispiel | Standard |
-| --- | --- | --- | --- |
-| `xy‑values‑[id]` | Wertepaare in x,y-Koordinaten für Graph der ID `id` als zweidimensionales JSON-Array. | [[0,0],[1,4],[2,6],[3,9]] | null |
-| `xy‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Messung mit Reibung | null |
-| `xy‑nolegend‑[id]` | Graph wird nicht in die Legende eingetragen. | true | false |
-| `xy‑style‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
-| `xy‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
-| `xy‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
-| `xy‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | green | red |
-| `xy‑fillcolor‑[id]` | Die Füllfarbe des Graphen zur ID `id`.  | yellow | null |
+#### Attribute für Graphen
+ Mit Hilfe der `graph`-Attribute können Messwertepaare oder Funktionsgraphen dargestellt werden. Es muss entweder
+ das Attribut `graph-values-[id]` oder `graph-expr-[id]` gesetzt werden, damit ein Graph zu sehen ist.
 
-#### Attribute für Funktionen
 | Attribut | Funktion | Beispiel | Standard |
 | --- | --- | --- | --- |
-| `function‑expr‑[id]` | Mathematischer Ausdruck, der von math.js evaluiert werden kann. Muss x als Variable enthalten. | 2*sin(x) | null |
-| `function‑start‑[id]` | x-Startwert des Graphen mit der ID `id`. | -4 | 0 |
-| `function‑end‑[id]` | x-Endwert des Graphen mit der ID `id`. | 20 | 10 |
-| `function‑step‑[id]` | Schrittweite der x-Werte zum Graphen mit der ID `id`. | 0.02 | 0.1 |
-| `function‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Sinus | null |
-| `function‑nolegend‑[id]` | Graph wird nicht in die Legende eingetragen. | true | false |
-| `function‑style‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
-| `function‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
-| `function‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
-| `function‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | magenta | blue |
-| `function‑fillcolor‑[id]` | Die Füllfarbe des Graphen zur ID `id`.  | cyan | null |
+| `graph‑values‑[id]` | Wertepaare in x,y-Koordinaten für Graph der ID `id` als zweidimensionales JSON-Array. | [[0,0],[1,4],[2,6],[3,9]] | null |
+| `graph‑expr‑[id]` | Mathematischer Ausdruck, der von math.js evaluiert werden kann. Muss x als Variable enthalten. | 2*sin(x) | null |
+| `graph‑start‑[id]` | x-Startwert des Graphen mit der ID `id`. | -4 | grid-xmin |
+| `graph‑end‑[id]` | x-Endwert des Graphen mit der ID `id`. | 20 | grid-xmax |
+| `graph‑step‑[id]` | Schrittweite der x-Werte zum Graphen mit der ID `id`. | 0.02 | grid-xsubdelta |
+| `graph‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Sinus | null |
+| `graph‑nolegend‑[id]` | Graph wird nicht in die Legende eingetragen. | true | false |
+| `graph‑style‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
+| `graph‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
+| `graph‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
+| `graph‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | magenta | blue |
+| `graph‑fillcolor‑[id]` | Die Füllfarbe des Graphen zur ID `id`.  | cyan | null |
 
 ### Slots
-lmschart stellt fünf Slots zur Verfügung, die in der folgenden Tabelle erklärt sind.
+lmschart stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklärt sind.
 | Slot | Funktion | Beispiel |
 | --- | --- | --- |
 | standardslot | Wird direkt auf dem Diagramm dargestellt | |
