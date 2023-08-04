@@ -8,12 +8,23 @@ Es ist ein einigermaßen moderner Browser mit Javascript- und SVG-Unterstützung
 von Funktionsgraphen benötigt werden, werden mit Hilfe der Funktion [evaluate](https://mathjs.org/docs/expressions/parsing.html#evaluate)
 von [mathjs](https://mathjs.org/) vorgenommen.
 
+## Installation
+Lade die Datei lms-chart.js in ein geeignetes Verzeichnis und füge im `head` deines HTML-Dokuments folgende Zeile ein.
+
+```html
+<script src="/pfad/zu/lms-chart.js"></script>
+```
+
+Ersetze bitte `/pfad/zu/` mit einer korrekten URL.
+
 ## Beschreibung
 Diese kleine Bibliothek stellt XY-Daten und Funktionsgraphen nur mit Hilfe von HTML
 in einem Diagramm dar. Das Diagramm wird mit SVG erzeugt. Achsenbeschriftung und Skalierungen
 werden mit CSS-grid platziert.
 
-    <lms-chart function-expr-1="x^2"></lms-chart>
+```html
+<lms-chart function-expr-1="x^2"></lms-chart>
+```
 
 erzeugt das folgende Diagramm:
 
@@ -76,6 +87,9 @@ lmschart stellt fünf Slots zur Verfügung, die in der folgenden Tabelle erklär
 | `ylabel` | Die Beschriftung der y-Achse. | `<div slot="ylabel">Stromstärke I in A</div>` |
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
 
+## Beispiele
+Folgen
+
 ## SVG-Koordinaten und reale Werte
 Für die Abbildung der Wertekoordinaten auf SVG-Koordinaten ist folgende Abbildung hilfreich:
 
@@ -85,7 +99,7 @@ Die schwarzen Achsen stellen das Koordinatensystem der realen Werte dar, so wie 
 Die roten Achsen stellen das SVG-Koordinatensystem dar. Die Ursprünge und X-Achsen der beiden Koordinatensysteme liegen übereinander.
 Die jeweiligen Achsen der realen Werte und von SVG haben verschiedene Skalierungen `xscale` und `yscale`. Ein Punkt im realen
 Koordinatensystem soll die Koordinaten `xr` und `yr` haben. Dann hat der gleiche Punkt im SVG-Koordinatensystem die Koordinaten
-`xr*xscale` und `-yr*yscale`.
+`xr*xscale` und `-yr*yscale`. Man beachte das Minuszeichen bei der Y-Koordinate.
 
 Mit Hilfe der SVG-Attribute `width`, `height` und `viewBox` lässt sich der sichtbare Ausschnitt und die Größe der SVG-Abbildung
 einstellen. Die Breite wird auf `(xrmax - xrmin)cm` und die Höhe auf `(yrmax - yrmin)cm` gesetzt. Das Attribut `viewBox` muss in
