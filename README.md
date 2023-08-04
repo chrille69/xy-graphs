@@ -86,6 +86,8 @@ lmschart stellt fünf Slots zur Verfügung, die in der folgenden Tabelle erklär
 | `title` | Die Überschrift des Diagramms. | `<div slot="title">Röntgenspektrum</div>` |
 | `xlabel` | Die Beschriftung der x-Achse. | `<div slot="xlabel">Spannung U in V</div>` |
 | `ylabel` | Die Beschriftung der y-Achse. | `<div slot="ylabel">Stromstärke I in A</div>` |
+| `legend‑before` | Text vor der Legende | `<div slot="legend-before">Legende:</div>` |
+| `legend‑after` | Text nach der Legende | `<div slot="legend-after">gemessen mit Spezialgerät</div>` |
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
 
 ## Beispiele
