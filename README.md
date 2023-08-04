@@ -58,6 +58,7 @@ die Größe des Diagramms und die Skalierung der Achsen. Mit Hilfe der `xy`-Attr
 | --- | --- | --- | --- |
 | `xy‑values‑[id]` | Wertepaare in x,y-Koordinaten für Graph der ID `id` als zweidimensionales JSON-Array. | [[0,0],[1,4],[2,6],[3,9]] | null |
 | `xy‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Messung mit Reibung | null |
+| `xy‑nolegend‑[id]` | Graph wird nicht in die Legende eingetragen. | true | false |
 | `xy‑style‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
 | `xy‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
 | `xy‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
@@ -72,6 +73,7 @@ die Größe des Diagramms und die Skalierung der Achsen. Mit Hilfe der `xy`-Attr
 | `function‑end‑[id]` | x-Endwert des Graphen mit der ID `id`. | 20 | 10 |
 | `function‑step‑[id]` | Schrittweite der x-Werte zum Graphen mit der ID `id`. | 0.02 | 0.1 |
 | `function‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Sinus | null |
+| `function‑nolegend‑[id]` | Graph wird nicht in die Legende eingetragen. | true | false |
 | `function‑style‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
 | `function‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
 | `function‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
