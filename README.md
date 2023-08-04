@@ -66,7 +66,7 @@ Attribute, die für dieses Template relevant sind, beginnen entweder mit `grid-`
 | `graph‑step‑[id]` | Schrittweite der x-Werte zum Graphen mit der ID `id`. | 0.02 | grid-xsubdelta |
 | `graph‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Sinus | null |
 | `graph‑nolegend‑[id]` | Graph wird nicht in die Legende eingetragen. | true | false |
-| `graph‑style‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
+| `graph‑symbol‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
 | `graph‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
 | `graph‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
 | `graph‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | magenta | blue |
