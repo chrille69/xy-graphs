@@ -1,3 +1,167 @@
+var lmsChartTemplate = document.createElement('template')
+lmsChartTemplate.innerHTML = `<style>
+    :host {
+        --breite: 15cm;
+        --hoehe: 10cm;
+        --ylabelbreite: 20px;
+    }
+    #lms-chart {
+        display: inline-grid;
+        grid-template-columns: auto auto auto;
+        grid-template-areas:
+            ". . title"
+            "ylabel yscale chart"
+            ". . xscale"
+            ". . xlabel";
+        position: relative;
+    }
+    .no-scaling-stroke {
+        vector-effect: non-scaling-stroke;
+    }
+    #lms-chart-grid, #lms-chart-subgrid {
+        fill: none;
+        stroke: grey;
+        stroke-width: 0.9pt;
+    }
+    #lms-chart-subgrid {
+        stroke-width: 0.3pt;
+    }
+    .datapath {
+        fill: none;
+        stroke-width: 1.3pt;
+        vector-effect: non-scaling-stroke;
+    }
+    .functionpath {
+        fill: none;
+        stroke-width: 1.3pt;
+        vector-effect: non-scaling-stroke;
+    }
+    .legenditem {
+        display: flex;
+        align-items: center;
+    }
+    .axis {
+        fill: none;
+        stroke: black;
+        stroke-width: 1pt;
+    }
+    .label {
+        text-align: center;
+    }
+    .absolute {
+        position: absolute;
+    }
+    .relative {
+        position: relative;
+    }
+    .breite {
+        width: var(--breite);
+    }
+    .hoehe {
+        height:var(--hoehe)
+    }
+    #lms-chart-error {
+        background-color: red;
+        color: white;
+        font-family: 'Courier New', Courier, monospace;
+    }
+    #lms-chart-legend {
+        --xpad: 2mm;
+        --ypad: 2mm;
+        width: calc(var(--breite) - 2 * var(--xpad));
+        height: calc(var(--hoehe) - 2 * var(--ypad));
+        padding: var(--ypad) var(--xpad);
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-start;
+    }
+    #lms-chart-legend-container {
+        background-color: white;
+        padding: 1mm;
+        border: 0.5pt solid gray;
+        border-radius: 2mm;
+    }
+    #lms-chart-svg {
+        border: 1px solid grey;
+        overflow: visible;
+        grid-area: chart;
+    }
+    #lms-chart-title {
+        grid-area: title;
+    }
+    #lms-chart-xlabel {
+        grid-area: xlabel;
+    }
+    #lms-chart-ylabel {
+        grid-area: ylabel;
+        align-self: center;
+        width: var(--hoehe);
+        rotate: 270deg;
+        margin-left: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
+        margin-right: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
+    }
+    ::slotted([slot=ylabel]) {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #chart-mit-overlay {
+        grid-area: chart;
+    }
+    #lms-chart-x-scale {
+        grid-area: xscale;
+    }
+    #lms-chart-y-scale {
+        grid-area: yscale;
+        padding: 0 0.5em;
+    }
+    .yscalehidden, .xscalehidden {
+        visibility: hidden;
+    }
+    .xscale {
+        width:100%;
+        text-align: center;
+        top: 0;
+    }
+    .yscale {
+        line-height: var(--hoehe);
+        vertical-align: middle;
+    }
+</style>
+<div style="font-family: Courier">
+    <div id="charterrorname" style="background-color: rgba(255, 0, 0, 0.747); color: white"></div>
+    <div id="charterrormessage"></div>
+    <pre id="charterrorstack"></pre>
+</div>
+<div id="lms-chart">
+    <div id="lms-chart-title"><slot name="title" class="label breite"></slot></div>
+    <div id="lms-chart-xlabel"><slot name="xlabel" class="label breite"></slot></div>
+    <div id="lms-chart-ylabel"><slot name="ylabel" class="label"></slot></div>
+    <div id="lms-chart-y-scale" class="relative"></div>
+    <div id="lms-chart-x-scale" class="relative"></div>
+    <div id="chart-mit-overlay" class="relative breite hoehe">
+        <svg id="lms-chart-svg" class="absolute breite hoehe">
+            <defs>
+                <marker id="lmsarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
+                     refX="-10" refY="0" markerWidth="10" markerHeight="4" orient="auto">
+                    <path style="stroke: none;" d="M0 0 L -10 2 L -10 -2 z"></path>
+                </marker>
+                <clipPath id="clipgraph">
+                    <rect id="clipgraphrect"></rect>
+                </clipPath>
+            </defs>
+            <path class="no-scaling-stroke" id="lms-chart-grid"></path>
+            <path class="no-scaling-stroke" id="lms-chart-subgrid"></path>
+            <line id="lms-chart-x-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+            <line id="lms-chart-y-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+        </svg>
+        <div id="lms-chart-legend" class="absolute"><div id="lms-chart-legend-container"></div></div>
+        <div id="standardslot" class="absolute breite"><slot></slot></div>
+        <div id="lms-chart-error" class="absolute breite"><slot name="error"></slot></div>
+    </div>
+</div>`
+
+
 class ChartError extends Error {
     constructor(message = "", ...args) {
         super(message, ...args);
@@ -353,7 +517,6 @@ class LmsChartSvg {
         const element = this.svg.getElementById("lms-chart-subgrid")
         element.setAttribute("d", dsubgrid)
     }
-
 }
 
 class LmsChartConfig {
@@ -380,8 +543,7 @@ class LmsChart extends HTMLElement {
 
     connectedCallback() {
         try {
-            let template = document.getElementById("lms-chart-template")
-            this.template = template.content.cloneNode(true)
+            this.template = lmsChartTemplate.content.cloneNode(true)
             this.create();
         }
         catch(err) {
