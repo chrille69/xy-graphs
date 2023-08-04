@@ -122,6 +122,10 @@ lmsChartTemplate.innerHTML = `<style>
         line-height: var(--hoehe);
         vertical-align: middle;
     }
+    .symbol {
+        vector-effect: non-scaling-stroke;
+        transform-origin: center;
+    }
 </style>
 <div style="font-family: Courier">
     <div id="charterrorname" style="background-color: rgba(255, 0, 0, 0.747); color: white"></div>
@@ -144,6 +148,12 @@ lmsChartTemplate.innerHTML = `<style>
                 <clipPath id="clipgraph">
                     <rect id="clipgraphrect"></rect>
                 </clipPath>
+                <path class="symbol" id="lms-symbol-square" d="m-0.7071067 -0.7071067 h1.414213562373 v1.414213562373 h-1.414213562373 z"/>
+                <path class="symbol" id="lms-symbol-circle" d="m-1 0 a1 1 180 0 0 2 0 a1 1 180 0 0 -2 0 z" />
+                <path class="symbol" id="lms-symbol-cross" d="m-1 -1 l2 2 m-2 0 l2 -2" />
+                <path class="symbol" id="lms-symbol-diamond" d="m-1 0 l1 1 l1 -1 l-1 -1 z" />
+                <path class="symbol" id="lms-symbol-triangle" d="m0 -0.75 l0.86602540378 1.5 l-1.732050808 0 z" />
+                <path class="symbol" id="lms-symbol-line" d="m-1 0 l2 0" />
             </defs>
             <path class="no-scaling-stroke" id="lms-chart-grid"></path>
             <path class="no-scaling-stroke" id="lms-chart-subgrid"></path>
@@ -185,7 +195,7 @@ class LmsChartContainer {
             try {
                 if (! graphs[id]['nolegend'])
                     this.lmschartsvg.appendLegendItem(id, graphs[id])
-                this.lmschartsvg.appendGraphPath(id, graphs[id])
+                this.lmschartsvg.appendGraph(id, graphs[id])
             }
             catch(err) {
                 if (err instanceof ChartError)
@@ -312,141 +322,120 @@ class LmsChartSvg {
         return {x: x, y: y}
     }
 
-    drawSegment(point, style, symbolsize) {
-        const x = point.x
-        const y = point.y
-
-        if (!style)
-            return `${x} ${y}`
-        
-        switch (style) {
-            case 'line':
-                return ` L${x} ${y}`
-            case 'circle':
-                return ` M${x-symbolsize} ${y} a${symbolsize} ${symbolsize} 180 0 0 ${2*symbolsize} 0 a${symbolsize} ${symbolsize} 180 0 0 ${-2*symbolsize} 0 z`
-            case 'cross':
-                return ` M${x-symbolsize} ${y-symbolsize} l${2*symbolsize} ${2*symbolsize} m${-2*symbolsize} 0 l${2*symbolsize} ${-2*symbolsize}`
-            case 'square':
-                return ` M${x-symbolsize} ${y-symbolsize} l${2*symbolsize} 0 l0 ${2*symbolsize} l${-2*symbolsize} 0 z`
-            case 'diamond':
-                return ` M${x-symbolsize} ${y} l${symbolsize} ${symbolsize} l${symbolsize} ${-symbolsize} l${-symbolsize} ${-symbolsize} z`
-            case 'triangle':
-                return ` M${x} ${y-symbolsize} l ${this.cos30*symbolsize} ${(1+this.sin30)*symbolsize} l${-2*this.cos30*symbolsize} 0 z`
-            default:
-                return ` L${x} ${y}`
-        }
-    }
-
-    appendGraphPath(id, graphinfo) {
-        let dpath =''
+    appendGraph(id, graphinfo) {
+        const elements = []
         if (graphinfo['values'] !== null)
-            dpath += this.appendDataPath(id, graphinfo)
-        if (graphinfo['expr'] !== null)
-            dpath += this.appendFunctionPath(id, graphinfo)
-        
-        const element = document.createElementNS("http://www.w3.org/2000/svg", "path")
-        element.classList.add('graphpath')
-        element.style['stroke'] = graphinfo.strokecolor
-        element.style['fill'] = graphinfo.fillcolor
-        element.style['stroke-width'] = graphinfo.linewidth
-        element.style['clip-path'] = 'url(#clipgraph)'
-        element.setAttribute("d", dpath)
-        this.svg.appendChild(element)
-    }
-
-    appendDataPath(id, xyinfo) {
-        let point
-        if (!xyinfo.values)
-            throw new ChartError(`xy (id=${id}): Keine Werte vorhanden.`)
-        if (! Array.isArray(xyinfo.values))
-            throw new ChartError(`xy (id=${id}): values muss ein zweidimensionales Array sein.`)
-        point = this.tupelToPoint(xyinfo.values[0])
-        let dpath = `M${this.drawSegment(point)}`
-        for (let i=1; i<xyinfo.values.length; i++) {
-            point = this.tupelToPoint(xyinfo.values[i])
-            dpath += this.drawSegment(point, xyinfo.style, xyinfo.symbolsize)
+            elements[0] = this.createGraphElement(graphinfo.values, graphinfo.symbol, graphinfo.symbolsize)
+        if (graphinfo['expr'] !== null) {
+            const values = this.createValuesFromFunction(id, graphinfo)
+            elements[1] = this.createGraphElement(values, graphinfo.symbol, graphinfo.symbolsize)
         }
-        return dpath
+
+        for (let element of elements) {
+            if (! element)
+                continue
+            
+            element.classList.add('graphpath')
+            element.style['stroke'] = graphinfo.strokecolor
+            element.style['fill'] = graphinfo.fillcolor
+            element.style['stroke-width'] = graphinfo.linewidth
+            element.style['clip-path'] = 'url(#clipgraph)'
+            this.svg.appendChild(element)
+        }
     }
 
-    appendFunctionPath(id, funcinfo) {
+    createGraphElement(values, symbol, size) {
+        if (symbol == 'line')
+            return this.createPathElement(values)
+        else {
+            return this.createSymbolGroup(values, symbol, size)
+        }
+    }
+
+    createSymbolGroup(values, symbol, size) {
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g")
+        for (let i=0; i<values.length; i++) {
+            const point = this.tupelToPoint(values[i])
+            const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
+            use.setAttribute('href',`#lms-symbol-${symbol}`)
+            use.setAttribute('x', point.x)
+            use.setAttribute('y', point.y)
+            use.setAttribute('transform-origin', `${point.x} ${point.y}`)
+            use.style['transform'] = `scale(${size})`
+            group.appendChild(use)
+        }
+        return group
+    }
+
+    createPathElement(values) {
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+        let point = this.tupelToPoint(values[0])
+        let dpath = `M${point.x} ${point.y}`
+        for (let i=1; i<values.length; i++) {
+            point = this.tupelToPoint(values[i])
+            dpath += ` L${point.x} ${point.y}`
+        }
+        path.setAttribute("d", dpath)
+        return path
+    }
+
+    createValuesFromFunction(id, graphinfo) {
+        if (graphinfo['expr'] === null)
+            return []
+        
         let tupel = []
-        let dpath = ''
-        let point
-        if (funcinfo.start === null)
-            funcinfo.start = this.config.xmin
-        if (isNaN(funcinfo.start))
-            throw new ChartError(`function (id=${id}): start ${funcinfo.start} ist keine Zahl.`)
-        if (funcinfo.end === null)
-            funcinfo.end = this.config.xmax
-        if (isNaN(funcinfo.end))
-            throw new ChartError(`function (id=${id}): end ${funcinfo.end} ist keine Zahl.`)
-        if (funcinfo.step === null)
-            funcinfo.step = this.config.xsubdelta
-        if (isNaN(funcinfo.step))
-            throw new ChartError(`function (id=${id}): end ${funcinfo.step} ist keine Zahl.`)
-        if (funcinfo.step == 0)
+        if (graphinfo.start === null)
+            graphinfo.start = this.config.xmin
+        if (isNaN(graphinfo.start))
+            throw new ChartError(`function (id=${id}): start ${graphinfo.start} ist keine Zahl.`)
+        if (graphinfo.end === null)
+            graphinfo.end = this.config.xmax
+        if (isNaN(graphinfo.end))
+            throw new ChartError(`function (id=${id}): end ${graphinfo.end} ist keine Zahl.`)
+        if (graphinfo.step === null)
+            graphinfo.step = this.config.xsubdelta
+        if (isNaN(graphinfo.step))
+            throw new ChartError(`function (id=${id}): end ${graphinfo.step} ist keine Zahl.`)
+        if (graphinfo.step == 0)
             throw new ChartError(`function (id=${id}): step darf nicht null sein.`)
-        if (funcinfo.step > 0 && funcinfo.start > funcinfo.end)
+        if (graphinfo.step > 0 && graphinfo.start > graphinfo.end)
             throw new ChartError(`function (id=${id}): step > 0 aber end < start.`)
-        if (funcinfo.step < 0 && funcinfo.start < funcinfo.end)
+        if (graphinfo.step < 0 && graphinfo.start < graphinfo.end)
             throw new ChartError(`function (id=${id}): step < 0 aber end > start.`)
 
-        try {
-            tupel = [funcinfo.start, math.evaluate(funcinfo.expr, { 'x': funcinfo.start })]
-        }
-        catch(err) {
-            throw new ChartError(err.message)
-        }
-        if (tupel[1] == Infinity)
-            throw new ChartError(`function (id=${id}): Bis zur Unendlichkeit und noch viel weiter...`)
-        point = this.tupelToPoint(tupel)
-        dpath = `M${this.drawSegment(point)}`
 
-        for (let i = funcinfo.start; i < funcinfo.end && funcinfo.start < funcinfo.end || i > funcinfo.end && funcinfo.start > funcinfo.end; i += funcinfo.step) {
+        const values = []
+        for (let i = graphinfo.start; i < graphinfo.end && graphinfo.start < graphinfo.end || i > graphinfo.end && graphinfo.start > graphinfo.end; i += graphinfo.step) {
             try {
-                tupel = [i, math.evaluate(funcinfo.expr, { 'x': i })]
+                tupel = [i, math.evaluate(graphinfo.expr, { 'x': i })]
+                if (tupel[1] == Infinity)
+                    throw new ChartError(`function (id=${id}): Bis zur Unendlichkeit und noch viel weiter...`)
+                values.push(tupel)
             }
             catch(err) {
                 throw new ChartError(err.message)
             }
-            if (tupel[1] == Infinity)
-                throw new ChartError(`function (id=${id}): Bis zur Unendlichkeit und noch viel weiter...`)
-            point = this.tupelToPoint(tupel)
-            dpath += this.drawSegment(point, funcinfo.style, funcinfo.symbolsize)
         }
 
-        return dpath
+        return values
     }
 
     appendLegendItem(id, info) {
-        const symbolsize = info.symbolsize
         const div = document.createElement('div')
         this.legendcontainer.appendChild(div)
         div.classList.add('legenditem')
         const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        symbolsvg.setAttribute('width',`${5*symbolsize}cm`)
-        symbolsvg.setAttribute('height',`${3*symbolsize}cm`)
-        symbolsvg.setAttribute('viewBox',`${-2.5*symbolsize} ${-1.5*symbolsize} ${5*symbolsize} ${3*symbolsize}`)
+        symbolsvg.setAttribute('width', '5mm')
+        symbolsvg.setAttribute('height', '5mm')
+        symbolsvg.setAttribute('viewBox','-1.5 -1.25 3 2.5')
         div.appendChild(symbolsvg)
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
-        symbolsvg.appendChild(path)
-        let d
-        if (info.style == 'line') {
-            d = `M${this.drawSegment({x: -2*symbolsize, y: 0})}`
-            d += this.drawSegment({x: 2*symbolsize, y: 0}, info.style, symbolsize)
-        }
-        else {
-            d = `M${this.drawSegment({x: 0, y: 0})}`
-            d += this.drawSegment({x: 0, y: 0}, info.style, symbolsize)
-        }
-        path.classList.add('graphpath')
-        path.setAttribute('d', d)
-        path.style['stroke'] = info.strokecolor
-        path.style['fill'] = info.fillcolor
-        path.style['stroke-width'] = info.linewidth
+        const element = this.createSymbolGroup([[0,0]], info.symbol)
+        symbolsvg.appendChild(element)
+        element.classList.add('graphpath')
+        element.style['stroke'] = info.strokecolor
+        element.style['fill'] = info.fillcolor
+        element.style['stroke-width'] = info.linewidth
         div.innerHTML += `<div>${info.name ? info.name : id}</div>`
-
     }
 
     drawXaxis() {
@@ -586,7 +575,7 @@ class LmsChart extends HTMLElement {
             step: null,
             fillcolor: null,
             strokecolor: 'blue',
-            style: 'line',
+            symbol: 'line',
             linewidth: '1.3pt',
             symbolsize: 0.15,
             nolegend: false,
