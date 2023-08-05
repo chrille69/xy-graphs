@@ -55,6 +55,13 @@ lmsChartTemplate.innerHTML = `<style>
     .hoehe {
         height:var(--hoehe)
     }
+    #charterrorname, #charterrormessage, charterrorstack {
+        font-family: Courier;
+    }
+    #charterrorname {
+        background-color: red;
+        color: white;
+    }
     #lms-chart-error {
         background-color: red;
         color: white;
@@ -127,8 +134,8 @@ lmsChartTemplate.innerHTML = `<style>
         transform-origin: center;
     }
 </style>
-<div style="font-family: Courier">
-    <div id="charterrorname" style="background-color: rgba(255, 0, 0, 0.747); color: white"></div>
+<div>
+    <div id="charterrorname"></div>
     <div id="charterrormessage"></div>
     <pre id="charterrorstack"></pre>
 </div>
@@ -155,10 +162,15 @@ lmsChartTemplate.innerHTML = `<style>
                 <path class="symbol" id="lms-symbol-triangle" d="m0 -0.75 l0.86602540378 1.5 l-1.732050808 0 z" />
                 <path class="symbol" id="lms-symbol-line" d="m-1 0 l2 0" />
             </defs>
-            <path class="no-scaling-stroke" id="lms-chart-grid"></path>
-            <path class="no-scaling-stroke" id="lms-chart-subgrid"></path>
-            <line id="lms-chart-x-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
-            <line id="lms-chart-y-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+            <g id="lms-chart-grids">
+                <path class="no-scaling-stroke" id="lms-chart-grid"></path>
+                <path class="no-scaling-stroke" id="lms-chart-subgrid"></path>
+            </g>
+            <g id="lms-chart-graphs" clip-path ="url(#clipgraph)"></g>
+            <g id="lms-chart-axis">
+                <line id="lms-chart-x-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+                <line id="lms-chart-y-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+            </g>
         </svg>
         <div id="lms-chart-legend" class="absolute"><div id="lms-chart-legend-container"><slot name="legend-before"></slot><div id="lms-chart-legend-list"></div><slot name="legend-after"></slot></div></div>
         <div id="standardslot" class="absolute breite"><slot></slot></div>
@@ -167,20 +179,262 @@ lmsChartTemplate.innerHTML = `<style>
 </div>`
 
 
-class ChartError extends Error {
-    constructor(message = "", ...args) {
-        super(message, ...args);
-        this.message = message;
+class ChartError extends Error {}
+
+class LmsChartSvg {
+    constructor(config, element) {
+        this.config = config
+        this.legendcontainer = element.getElementById("lms-chart-legend-list")
+        this.svg = element.getElementById("lms-chart-svg")
+        this.graphgroup = element.getElementById("lms-chart-graphs")
+
+        this.svg.setAttribute("preserveAspectRatio", 'none')
+        this.svg.setAttribute("viewBox", `${this.config.totalxmin} ${-this.config.totalymax} ${this.config.totalwidth} ${this.config.totalheight}`)
+        this.svg.setAttribute("width", `${this.config.totalwidth}cm`)
+        this.svg.setAttribute("height", `${this.config.totalheight}cm`)
+
+        this.linienbreite = 0.0352777778 // 1pt in cm
+
+        this.drawSubgrid()
+        this.drawGrid()
+
+        if (! this.config.xhideaxis)
+            this.drawXaxis()
+        if (! this.config.yhideaxis)
+            this.drawYaxis()
+
+        this.cos30 = 0.8660254037844387
+        this.sin30 = 0.5
+    
+        const clipgraphrect = this.svg.getElementById("clipgraphrect")
+        clipgraphrect.setAttribute('x',  this.config.totalxmin)
+        clipgraphrect.setAttribute('y', -this.config.totalymax)
+        clipgraphrect.setAttribute('width',  this.config.totalwidth)
+        clipgraphrect.setAttribute('height', this.config.totalheight)
+    }
+
+    tupelToPoint(tupel) {
+        if (! Array.isArray(tupel) || tupel.length < 2)
+            throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
+
+        let x = parseFloat(tupel[0])
+        if (isNaN(x))
+            throw new ChartError(`${tupel[0]} ist keine Zahl.`)
+
+        let y = parseFloat(tupel[1])
+        if (isNaN(y))
+            throw new ChartError(`${tupel[1]} ist keine Zahl.`)
+
+        return {x: x*this.config.xscale, y: - y*this.config.yscale}
+    }
+
+    appendGraph(graphinfo) {
+        const elements = []
+        if (graphinfo['values'] !== null) {
+            let values
+            try {
+                values = JSON.parse(graphinfo.values)
+            } catch (error) {
+                throw new ChartError(error.message)
+            }
+            elements[0] = this.createGraphElement(values, graphinfo.symbol, graphinfo.symbolsize)
+        }
+        if (graphinfo['expr'] !== null) {
+            const values = this.createValuesFromFunction(graphinfo)
+            elements[1] = this.createGraphElement(values, graphinfo.symbol, graphinfo.symbolsize)
+        }
+
+        for (let element of elements) {
+            if (! element)
+                continue
+            
+            element.classList.add('graphpath')
+            element.style['stroke'] = graphinfo.strokecolor
+            element.style['fill'] = graphinfo.fillcolor
+            element.style['stroke-width'] = graphinfo.linewidth
+            this.graphgroup.appendChild(element)
+        }
+    }
+
+    createGraphElement(values, symbol, size) {
+        if (symbol == 'line')
+            return this.createPathElement(values)
+        else {
+            return this.createSymbolGroup(values, symbol, size)
+        }
+    }
+
+    createSymbolGroup(values, symbol, size) {
+
+        if (! Array.isArray(values))
+            throw new ChartError(`values muss ein zweidimensionales Array sein.`)
+
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g")
+        for (let i=0; i<values.length; i++) {
+            const point = this.tupelToPoint(values[i])
+            const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
+            use.setAttribute('href',`#lms-symbol-${symbol}`)
+            use.setAttribute('x', point.x)
+            use.setAttribute('y', point.y)
+            use.setAttribute('transform-origin', `${point.x} ${point.y}`)
+            use.style['transform'] = `scale(${size})`
+            group.appendChild(use)
+        }
+        return group
+    }
+
+    createPathElement(values) {
+
+        if (! Array.isArray(values))
+            throw new ChartError(`values muss ein zweidimensionales Array sein.`)
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+        let point = this.tupelToPoint(values[0])
+        let dpath = `M${point.x} ${point.y}`
+        for (let i=1; i<values.length; i++) {
+            point = this.tupelToPoint(values[i])
+            dpath += ` L${point.x} ${point.y}`
+        }
+        path.setAttribute("d", dpath)
+        return path
+    }
+
+    createValuesFromFunction(graphinfo) {
+        if (graphinfo['expr'] === null)
+            return []
+        
+        if (typeof math === 'undefined') {
+            throw new ChartError('Für Funktionen benötigt lmschart die Javascript-Bibliothek <a href="https://mathjs.org/">mathjs</a>')
+        }
+        let start, end, step, tupel = []
+        if (graphinfo.start === null)
+            graphinfo.start = this.config.xmin
+        start = parseFloat(graphinfo.start)
+        if (isNaN(start))
+            throw new ChartError(`start ${graphinfo.start} ist keine Zahl.`)
+
+        if (graphinfo.end === null)
+            graphinfo.end = this.config.xmax
+        end = parseFloat(graphinfo.end)
+        if (isNaN(end))
+            throw new ChartError(`end ${graphinfo.end} ist keine Zahl.`)
+
+        if (graphinfo.step === null)
+            graphinfo.step = this.config.xsubdelta
+        step = parseFloat(graphinfo.step)
+        if (isNaN(step))
+            throw new ChartError(`step ${graphinfo.step} ist keine Zahl.`)
+
+        if (step == 0)
+            throw new ChartError(`step darf nicht null sein.`)
+        if (step > 0 && start > end)
+            throw new ChartError(`step > 0 aber end < start.`)
+        if (step < 0 && start < end)
+            throw new ChartError(`step < 0 aber end > start.`)
+
+        const values = []
+        for (let i = start; i <= end && start <= end || i >= end && start >= end; i += step) {
+            try {
+                tupel = [i, math.evaluate(graphinfo.expr, { 'x': i })]
+                if (tupel[1] == Infinity)
+                    throw new ChartError(`Bis zur Unendlichkeit und noch viel weiter...`)
+                values.push(tupel)
+            }
+            catch(err) {
+                throw new ChartError(err.message)
+            }
+        }
+
+        return values
+    }
+
+    appendLegendItem(info) {
+        const div = document.createElement('div')
+        this.legendcontainer.appendChild(div)
+        div.classList.add('legenditem')
+        const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        symbolsvg.setAttribute('width', '5mm')
+        symbolsvg.setAttribute('height', '5mm')
+        symbolsvg.setAttribute('viewBox','-1.5 -1.25 3 2.5')
+        div.appendChild(symbolsvg)
+        const element = this.createSymbolGroup([[0,0]], info.symbol)
+        symbolsvg.appendChild(element)
+        element.classList.add('graphpath')
+        element.style['stroke'] = info.strokecolor
+        element.style['fill'] = info.fillcolor
+        element.style['stroke-width'] = info.linewidth
+        div.innerHTML += `<div>${info.name ? info.name : (info.expr ? info.expr : info.id)}</div>`
+    }
+
+    drawXaxis() {
+        const element = this.svg.getElementById("lms-chart-x-axis")
+        element.setAttribute("x1", this.config.totalxmin)
+        element.setAttribute("y1", 0)
+        element.setAttribute("x2", this.config.totalxmax-10*this.linienbreite)
+        element.setAttribute("y2", 0)
+    }
+
+    drawYaxis() {
+        const element = this.svg.getElementById("lms-chart-y-axis")
+        element.setAttribute("x1", 0)
+        element.setAttribute("y1", -this.config.totalymin)
+        element.setAttribute("x2", 0)
+        element.setAttribute("y2", -this.config.totalymax + 10*this.linienbreite)
+    }
+
+    drawGrid() {
+        let dgrid = ""
+
+        if (! this.config.xhidegrid) {
+            for (let i = this.config.totalxmin; i <= this.config.totalxmax; i += this.config.xdelta*this.config.xscale) {
+                dgrid += ` M${i} ${-this.config.totalymin} L${i} ${-this.config.totalymax}`
+            }
+        }
+        
+        if (! this.config.yhidegrid) {
+            for (let i = this.config.totalymin; i <= this.config.totalymax; i += this.config.ydelta*this.config.yscale) {
+                dgrid += ` M${this.config.totalxmin} ${-i} L${this.config.totalxmax} ${-i}`
+            }
+        }
+
+        if (! dgrid)
+            return
+        
+        const element = this.svg.getElementById("lms-chart-grid")
+        element.setAttribute("d", dgrid)
+    }
+
+    drawSubgrid() {
+        let dsubgrid = ''
+
+        if (! this.config.xhidesubgrid) {
+            for (let i = this.config.totalxmin; i <= this.config.totalxmax; i += this.config.xsubdelta*this.config.xscale) {
+                dsubgrid += ` M${i} ${-this.config.totalymin} L${i} ${-this.config.totalymax}`
+            }
+        }
+
+        if (! this.config.yhidesubgrid) {
+            for (let i = this.config.totalymin; i <= this.config.totalymax; i += this.config.ysubdelta*this.config.yscale) {
+                dsubgrid += ` M${this.config.totalxmin} ${-i} L${this.config.totalxmax} ${-i}`
+            }
+        }
+
+        if (! dsubgrid)
+            return
+
+        const element = this.svg.getElementById("lms-chart-subgrid")
+        element.setAttribute("d", dsubgrid)
     }
 }
 
 class LmsChartContainer {
-    constructor(parent) {
-        this.parent = parent
-        this.config = parent.config
-        this.element = parent.template
+    constructor(config, element, errorfunc) {
+        this.config = config
+        this.element = element
+        this.errorfunc = errorfunc
+        this.colorlist = ['blue','red','green','magenta','cyan','purple','orange']
 
-        this.lmschartsvg = new LmsChartSvg(this)
+        this.lmschartsvg = new LmsChartSvg(this.config, this.element)
 
         if (! this.config.xhidescale)
             this.configureXscale()
@@ -191,15 +445,17 @@ class LmsChartContainer {
     }
 
     appendGraphPaths(graphs) {
-        for (let id in graphs ) {
+        for (let graph of Object.values(graphs).sort((a,b) => a.order - b.order)) {
             try {
-                if (! graphs[id]['nolegend'])
-                    this.lmschartsvg.appendLegendItem(id, graphs[id])
-                this.lmschartsvg.appendGraph(id, graphs[id])
+                if (! graph.strokecolor)
+                    graph.strokecolor = this.colorlist.length > 0 ? this.colorlist.shift() : 'black'
+                if (! graphs['nolegend'])
+                    this.lmschartsvg.appendLegendItem(graph)
+                this.lmschartsvg.appendGraph(graph)
             }
             catch(err) {
-                if (err instanceof ChartError)
-                    this.parent.errormessage(err)
+                if (err instanceof ChartError) 
+                    this.errorfunc(`graph (id=${graph.id}): ${err.message}`)
                 else
                     throw err
             }
@@ -277,231 +533,19 @@ class LmsChartContainer {
     }
 }
 
-class LmsChartSvg {
-    constructor(parent) {
-        this.config = parent.config
-        this.legendcontainer = parent.element.getElementById("lms-chart-legend-list")
-        this.svg = parent.element.getElementById("lms-chart-svg")
-
-        this.svg.setAttribute("preserveAspectRatio", 'none')
-        this.svg.setAttribute("viewBox", `${this.config.totalxmin} ${-this.config.totalymax} ${this.config.totalwidth} ${this.config.totalheight}`)
-        this.svg.setAttribute("width", `${this.config.totalwidth}cm`)
-        this.svg.setAttribute("height", `${this.config.totalheight}cm`)
-
-        this.linienbreite = 0.0352777778 // 1pt in cm
-
-        this.drawSubgrid()
-        this.drawGrid()
-
-        if (! this.config.xhideaxis)
-            this.drawXaxis()
-        if (! this.config.yhideaxis)
-            this.drawYaxis()
-
-        this.cos30 = 0.8660254037844387
-        this.sin30 = 0.5
-    
-        const clipgraphrect = this.svg.getElementById("clipgraphrect")
-        clipgraphrect.setAttribute('x',  this.config.totalxmin)
-        clipgraphrect.setAttribute('y', -this.config.totalymax)
-        clipgraphrect.setAttribute('width',  this.config.totalwidth)
-        clipgraphrect.setAttribute('height', this.config.totalheight)
-    }
-
-    tupelToPoint(tupel) {
-        if (! Array.isArray(tupel) || tupel.length < 2)
-            throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
-        let x = parseFloat(tupel[0])
-        let y = parseFloat(tupel[1])
-        x = x*this.config.xscale
-        y = - y*this.config.yscale
-        if (isNaN(x))
-            throw new ChartError(`${tupel[0]} ist keine Zahl.`)
-        if (isNaN(y))
-            throw new ChartError(`${tupel[1]} ist keine Zahl.`)
-        return {x: x, y: y}
-    }
-
-    appendGraph(id, graphinfo) {
-        const elements = []
-        if (graphinfo['values'] !== null)
-            elements[0] = this.createGraphElement(graphinfo.values, graphinfo.symbol, graphinfo.symbolsize)
-        if (graphinfo['expr'] !== null) {
-            const values = this.createValuesFromFunction(id, graphinfo)
-            elements[1] = this.createGraphElement(values, graphinfo.symbol, graphinfo.symbolsize)
-        }
-
-        for (let element of elements) {
-            if (! element)
-                continue
-            
-            element.classList.add('graphpath')
-            element.style['stroke'] = graphinfo.strokecolor
-            element.style['fill'] = graphinfo.fillcolor
-            element.style['stroke-width'] = graphinfo.linewidth
-            element.style['clip-path'] = 'url(#clipgraph)'
-            this.svg.appendChild(element)
-        }
-    }
-
-    createGraphElement(values, symbol, size) {
-        if (symbol == 'line')
-            return this.createPathElement(values)
-        else {
-            return this.createSymbolGroup(values, symbol, size)
-        }
-    }
-
-    createSymbolGroup(values, symbol, size) {
-        const group = document.createElementNS("http://www.w3.org/2000/svg", "g")
-        for (let i=0; i<values.length; i++) {
-            const point = this.tupelToPoint(values[i])
-            const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
-            use.setAttribute('href',`#lms-symbol-${symbol}`)
-            use.setAttribute('x', point.x)
-            use.setAttribute('y', point.y)
-            use.setAttribute('transform-origin', `${point.x} ${point.y}`)
-            use.style['transform'] = `scale(${size})`
-            group.appendChild(use)
-        }
-        return group
-    }
-
-    createPathElement(values) {
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
-        let point = this.tupelToPoint(values[0])
-        let dpath = `M${point.x} ${point.y}`
-        for (let i=1; i<values.length; i++) {
-            point = this.tupelToPoint(values[i])
-            dpath += ` L${point.x} ${point.y}`
-        }
-        path.setAttribute("d", dpath)
-        return path
-    }
-
-    createValuesFromFunction(id, graphinfo) {
-        if (graphinfo['expr'] === null)
-            return []
-        
-        let tupel = []
-        if (graphinfo.start === null)
-            graphinfo.start = this.config.xmin
-        if (isNaN(graphinfo.start))
-            throw new ChartError(`function (id=${id}): start ${graphinfo.start} ist keine Zahl.`)
-        if (graphinfo.end === null)
-            graphinfo.end = this.config.xmax
-        if (isNaN(graphinfo.end))
-            throw new ChartError(`function (id=${id}): end ${graphinfo.end} ist keine Zahl.`)
-        if (graphinfo.step === null)
-            graphinfo.step = this.config.xsubdelta
-        if (isNaN(graphinfo.step))
-            throw new ChartError(`function (id=${id}): end ${graphinfo.step} ist keine Zahl.`)
-        if (graphinfo.step == 0)
-            throw new ChartError(`function (id=${id}): step darf nicht null sein.`)
-        if (graphinfo.step > 0 && graphinfo.start > graphinfo.end)
-            throw new ChartError(`function (id=${id}): step > 0 aber end < start.`)
-        if (graphinfo.step < 0 && graphinfo.start < graphinfo.end)
-            throw new ChartError(`function (id=${id}): step < 0 aber end > start.`)
-
-
-        const values = []
-        for (let i = graphinfo.start; i < graphinfo.end && graphinfo.start < graphinfo.end || i > graphinfo.end && graphinfo.start > graphinfo.end; i += graphinfo.step) {
-            try {
-                tupel = [i, math.evaluate(graphinfo.expr, { 'x': i })]
-                if (tupel[1] == Infinity)
-                    throw new ChartError(`function (id=${id}): Bis zur Unendlichkeit und noch viel weiter...`)
-                values.push(tupel)
-            }
-            catch(err) {
-                throw new ChartError(err.message)
-            }
-        }
-
-        return values
-    }
-
-    appendLegendItem(id, info) {
-        const div = document.createElement('div')
-        this.legendcontainer.appendChild(div)
-        div.classList.add('legenditem')
-        const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        symbolsvg.setAttribute('width', '5mm')
-        symbolsvg.setAttribute('height', '5mm')
-        symbolsvg.setAttribute('viewBox','-1.5 -1.25 3 2.5')
-        div.appendChild(symbolsvg)
-        const element = this.createSymbolGroup([[0,0]], info.symbol)
-        symbolsvg.appendChild(element)
-        element.classList.add('graphpath')
-        element.style['stroke'] = info.strokecolor
-        element.style['fill'] = info.fillcolor
-        element.style['stroke-width'] = info.linewidth
-        div.innerHTML += `<div>${info.name ? info.name : id}</div>`
-    }
-
-    drawXaxis() {
-        const element = this.svg.getElementById("lms-chart-x-axis")
-        element.setAttribute("x1", this.config.totalxmin)
-        element.setAttribute("y1", 0)
-        element.setAttribute("x2", this.config.totalxmax-10*this.linienbreite)
-        element.setAttribute("y2", 0)
-    }
-
-    drawYaxis() {
-        const element = this.svg.getElementById("lms-chart-y-axis")
-        element.setAttribute("x1", 0)
-        element.setAttribute("y1", -this.config.totalymin)
-        element.setAttribute("x2", 0)
-        element.setAttribute("y2", -this.config.totalymax + 10*this.linienbreite)
-    }
-
-    drawGrid() {
-        let dgrid = ""
-
-        if (! this.config.xhidegrid) {
-            for (let i = this.config.totalxmin; i <= this.config.totalxmax; i += this.config.xdelta*this.config.xscale) {
-                dgrid += ` M${i} ${-this.config.totalymin} L${i} ${-this.config.totalymax}`
-            }
-        }
-        
-        if (! this.config.yhidegrid) {
-            for (let i = this.config.totalymin; i <= this.config.totalymax; i += this.config.ydelta*this.config.yscale) {
-                dgrid += ` M${this.config.totalxmin} ${-i} L${this.config.totalxmax} ${-i}`
-            }
-        }
-
-        if (! dgrid)
-            return
-        
-        const element = this.svg.getElementById("lms-chart-grid")
-        element.setAttribute("d", dgrid)
-    }
-
-    drawSubgrid() {
-        let dsubgrid = ''
-
-        if (! this.config.xhidesubgrid) {
-            for (let i = this.config.totalxmin; i <= this.config.totalxmax; i += this.config.xsubdelta*this.config.xscale) {
-                dsubgrid += ` M${i} ${-this.config.totalymin} L${i} ${-this.config.totalymax}`
-            }
-        }
-
-        if (! this.config.yhidesubgrid) {
-            for (let i = this.config.totalymin; i <= this.config.totalymax; i += this.config.ysubdelta*this.config.yscale) {
-                dsubgrid += ` M${this.config.totalxmin} ${-i} L${this.config.totalxmax} ${-i}`
-            }
-        }
-
-        if (! dsubgrid)
-            return
-
-        const element = this.svg.getElementById("lms-chart-subgrid")
-        element.setAttribute("d", dsubgrid)
-    }
-}
-
 class LmsChartConfig {
     constructor(configobject) {
         Object.assign(this, configobject)
+
+        for (let prop of ['xsize','ysize','xdelta','ydelta','xsubdelta','ysubdelta']) {
+            this[prop] = parseFloat(this[prop])
+            if (isNaN(this[prop]) || this[prop] <= 0)
+                throw new ChartError(`${prop} muss eine positive Zahl größer 0 sein.`)
+        }
+
+        for (let prop of ['xhidegrid','yhidegrid','xhidesubgrid','yhidesubgrid','xhideaxis','yhideaxis','xhidescale','yhidescale']) {
+            this[prop] = ! ["0", "false", false].includes(this[prop])
+        }
 
         this.xscale = this.xsize/this.xdelta
         this.yscale = this.ysize/this.ydelta
@@ -527,10 +571,15 @@ class LmsChart extends HTMLElement {
             this.create();
         }
         catch(err) {
-            this.template.getElementById('charterrorname').innerHTML = err.name
-            this.template.getElementById('charterrormessage').innerHTML = err.message
-            this.template.getElementById('charterrorstack').innerHTML = err.stack
-            this.template.getElementById('lms-chart').style.display = 'none'
+            if (err instanceof ChartError) {
+                this.errormessage(err.message)
+            }
+            else {
+                this.template.getElementById('charterrorname').innerHTML = err.name
+                this.template.getElementById('charterrormessage').innerHTML = err.message
+                this.template.getElementById('charterrorstack').innerHTML = err.stack
+                this.template.getElementById('lms-chart').style.display = 'none'
+            }
         }
         finally {
             const schatten = this.attachShadow({mode: "open"})
@@ -574,13 +623,14 @@ class LmsChart extends HTMLElement {
             end: null,
             step: null,
             fillcolor: null,
-            strokecolor: 'blue',
+            strokecolor: null,
             symbol: 'line',
             linewidth: '1.3pt',
             symbolsize: 0.15,
             nolegend: false,
             name: null
         }
+        this.graphorder = 0
 
         this.gridkeys = Object.keys(this.configobject)
         this.graphkeys = Object.keys(this.emptygraph)
@@ -595,20 +645,10 @@ class LmsChart extends HTMLElement {
             }
         }
 
-        try {
-            this.config = new LmsChartConfig(this.configobject)
-            this.setCSSVariables()
-            const lmschartcontainer = new LmsChartContainer(this)
-            lmschartcontainer.appendGraphPaths(this.graphs)
-        }
-        catch(err) {
-            if (err instanceof ChartError) {
-                this.errormessage(err.message)
-            }
-            else {
-                throw err
-            }
-        }
+        this.config = new LmsChartConfig(this.configobject)
+        this.setCSSVariables()
+        const lmschartcontainer = new LmsChartContainer(this.config, this.template, (msg) => this.errormessage(msg))
+        lmschartcontainer.appendGraphPaths(this.graphs)
     }
 
     setCSSVariables() {
@@ -618,95 +658,39 @@ class LmsChart extends HTMLElement {
 
     parseGridAttribute(attr) {
         const attrinfo = attr.name.split('-')
-        if (attrinfo.length < 2) {
-            this.errormessage(`${attr.name}: Falsches Format. grid-[eigenschaft] gefordert.`)
-            return
-        }
-        if (attrinfo[1] == '') {
-            this.errormessage(`${attr.name}: Falsches Format. Eigenschaft fehlt.`)
-            return
-        }
+        if (attrinfo.length < 2)
+            throw new ChartError(`${attr.name}: Falsches Format. grid-[eigenschaft] gefordert.`)
+
+        if (attrinfo[1] == '')
+            throw new ChartError(`${attr.name}: Falsches Format. Eigenschaft fehlt.`)
         
         const gridprop = attrinfo[1]
-        if (! this.gridkeys.includes(gridprop)) {
-            this.errormessage(`${attr.name}: Erlaubte Eigenschaften: ${this.gridkeys.join(", ")}.`)
-            return
-        }
-        switch(gridprop) {
-            case 'xsize':
-            case 'ysize':
-            case 'xsize':
-            case 'ysize':
-            case 'xdelta':
-            case 'ydelta':
-            case 'xsubdelta':
-            case 'ysubdelta':
-            case 'xmin':
-            case 'xmax':
-            case 'ymin':
-            case 'ymax':
-                const number = Number(attr.value)
-                if (isNaN(number)) return
-                this.configobject[gridprop] = number
-                break;
-            case 'xhidegrid':
-            case 'yhidegrid':
-            case 'xhidesubgrid':
-            case 'yhidesubgrid':
-            case 'xhideaxis':
-            case 'yhideaxis':
-            case 'xhidescale':
-            case 'yhidescale':
-                this.configobject[gridprop] = ! ["0", "false"].includes(attr.value)
-                break;
-            default:
-                this.configobject[gridprop] = attr.value
-        }
+        if (! this.gridkeys.includes(gridprop))
+            throw new ChartError(`${attr.name}: ${gridprop} unbekannt. Erlaubte Eigenschaften: ${this.gridkeys.join(", ")}.`)
+
+        this.configobject[gridprop] = attr.value
     }
 
     parseGraphAttribute(attr) {
         const attrinfo = attr.name.split('-')
-        if (attrinfo.length != 3) {
-            this.errormessage(`${attr.name}: Falsches Format. xy-[typ]-[id] gefordert.`)
-            return
-        }
-        if (attrinfo[2] == '') {
-            this.errormessage(`${attr.name}: Falsches Format. id fehlt`)
-            return
-        }
+        if (attrinfo.length != 3)
+            throw new ChartError(`${attr.name}: Falsches Format. graph-[eigenschaft]-[id] gefordert.`)
+
+        if (attrinfo[1] == '')
+            throw new ChartError(`${attr.name}: Falsches Format. graph-[eigenschaft]-[id] ist gefordert.`)
+        
+        if (attrinfo[2] == '')
+            throw new ChartError(`${attr.name}: Falsches Format. id nicht angegeben.`)
 
         const graphid = attrinfo[2]
         const graphprop = attrinfo[1]
-        if (! this.graphkeys.includes(graphprop)) {
-            this.errormessage(`${attr.name}: Erlaubt sind nur ${this.graphkeys.join(', ')}`)
-            return
-        }
+        if (! this.graphkeys.includes(graphprop))
+            throw new ChartError(`${attr.name}: ${graphprop} unbekannt. Erlaubt sind nur ${this.graphkeys.join(', ')}`)
 
         if (!(graphid in this.graphs))
-            this.graphs[graphid] = {...this.emptygraph}
+            this.graphs[graphid] = {...this.emptygraph, id: graphid, order: this.graphorder++ }
 
-        switch(graphprop) {
-            case 'values':
-                try {
-                    this.graphs[graphid][graphprop] = JSON.parse(attr.value)
-                }
-                catch(err) {
-                    this.errormessage(err)
-                }
-                break;
-            case 'start':
-            case 'end':
-            case 'step':
-            case 'symbolsize':
-                const number = Number(attr.value)
-                this.graphs[graphid][graphprop] = number
-                break;
-            case 'nolegend':
-                this.graphs[graphid][graphprop] = ! ["0", "false"].includes(attr.value)
-                break;
-            default:
-                this.graphs[graphid][graphprop] = attr.value
-        }
+        this.graphs[graphid][graphprop] = attr.value
     }
 
     errormessage(msg) {
