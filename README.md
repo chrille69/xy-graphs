@@ -99,13 +99,15 @@ lmschart stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklä
 
 ### Messung mit Beschriftung
 ```html
-<lms-chart graph-values-1="[[1,4],[2,4.9],[3,5.1],[4,5.5],[5,6.9],[6,6.8],[7,7.9],[8,7.9]]" graph-symbol-1="diamond">
+<lms-chart graph-values-1="[[1,4],[2,4.9],[3,5.1],[4,5.5],[5,6.9],[6,6.8],[7,7.9],[8,7.9]]"
+           graph-symbol-1="diamond" graph-name-1="Konstantan">
     <h3 slot="title">Spezifischer Widerstand</h3>
     <div slot="xlabel">Drahtlänge l in cm</div>
     <div slot="ylabel">Widerstand R in Ohm</div>
 </lms-chart>
 ```
-![image](https://github.com/chrille69/lmschart/assets/47904800/f9874b14-e607-4cce-b0f3-e551af98811b)
+![image](https://github.com/chrille69/lmschart/assets/47904800/1686ed6d-5481-4dbf-88df-b3edf6ac6aae)
+
 
 
 
