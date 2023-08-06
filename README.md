@@ -89,6 +89,7 @@ lmschart stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklä
 | :---: | :---: |
 | `<lms-chart grid-legendposition="none"></lms-chart>` | ![image](https://github.com/chrille69/lmschart/assets/47904800/ef4ce2e0-458f-4c82-8271-add8a361f07c) |
 | `<lms-chart grid-ymax="2" grid-ymin="-2" graph-expr-1="sin(x)"></lms-chart>` | ![image](https://github.com/chrille69/lmschart/assets/47904800/539b50ce-461a-4a68-abe0-58cdb3ca6de5) |
+| `<lms-chart graph-values-1="[[1,4],[2,4.9],[3,5.1],[4,5.5],[5,6.9],[6,6.8],[7,7.9],[8,7.9]]" graph-symbol-1="diamond"><h3 slot="title">Spezifischer Widerstand</h3><div slot="xlabel">Drahtlänge l in m</div><div slot="ylabel">Widerstand R in Ohm</div></lms-chart>` | ![image](https://github.com/chrille69/lmschart/assets/47904800/8824463d-8016-45fc-9ac4-fe03c8787da1) |
 
 
 ## SVG-Koordinaten und reale Werte
