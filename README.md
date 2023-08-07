@@ -29,7 +29,7 @@ werden mit CSS-grid platziert.
 
 erzeugt das folgende Diagramm:
 
-![image](https://github.com/chrille69/lmschart/assets/47904800/2fb73a41-522a-4f10-8b1b-cce25fc37725)
+![image](screenshots/parabel.png)
 
 Skalierung, Koordinatengitter und Wertebereiche lassen sich mit HTML-Attributen einstellen. Achsenbeschriftungen und Titel
 des Diagramms können mit Hilfe von Slots angegeben werden. Der Standardslot wird direkt auf das Diagramm platziert.
@@ -89,13 +89,13 @@ lmschart stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklä
 ```html
 <lms-chart grid-legendposition="none"></lms-chart>
 ```
-![image](https://github.com/chrille69/lmschart/assets/47904800/ef4ce2e0-458f-4c82-8271-add8a361f07c)
+![image](screenshots/leer.png)
 
 ### Einfache Funktion
 ```html
 <lms-chart grid-ymax="2" grid-ymin="-2" graph-expr-1="sin(x)"></lms-chart>
 ```
-![image](https://github.com/chrille69/lmschart/assets/47904800/539b50ce-461a-4a68-abe0-58cdb3ca6de5)
+![image](screenshots/sinus.png)
 
 ### Messung mit Beschriftung
 ```html
@@ -106,7 +106,8 @@ lmschart stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklä
     <div slot="ylabel">Widerstand R in Ohm</div>
 </lms-chart>
 ```
-![image](https://github.com/chrille69/lmschart/assets/47904800/1686ed6d-5481-4dbf-88df-b3edf6ac6aae)
+![image](screenshots/messung.png)
+
 
 ## Zwei Messungen mit verschiedenen Parameter
 ```html
@@ -123,7 +124,7 @@ lmschart stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklä
     <div slot="ylabel">Impulse pro Sekunde</div>
 </lms-chart>
 ```
-![image](https://github.com/chrille69/lmschart/assets/47904800/d9efab73-a0e4-453e-8033-429f10e3b331)
+![image](screenshots/roentgen.png)
 
 
 
