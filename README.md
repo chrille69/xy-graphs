@@ -135,11 +135,11 @@ Für die Abbildung der Wertekoordinaten auf SVG-Koordinaten ist folgende Abbildu
 
 Die schwarzen Achsen stellen das Koordinatensystem der realen Werte dar, so wie es normalerweise gezeichnet wird (Y-Achse nach oben).
 Die roten Achsen stellen das SVG-Koordinatensystem dar. Die Ursprünge und X-Achsen der beiden Koordinatensysteme liegen übereinander.
-Die jeweiligen Achsen der realen Werte und von SVG haben verschiedene Skalierungen `xscale` und `yscale`. Ein Punkt im realen
-Koordinatensystem soll die Koordinaten `xr` und `yr` haben. Dann hat der gleiche Punkt im SVG-Koordinatensystem die Koordinaten
-`xr*xscale` und `-yr*yscale`. Man beachte das Minuszeichen bei der Y-Koordinate.
+Die jeweiligen Achsen der realen Werte und der SVG-Koordinaten haben verschiedene Skalierungen `xscale` und `yscale`. Hat ein Punkt im realen
+Koordinatensystem die Koordinaten `xr` und `yr` haben, dann hat er im SVG-Koordinatensystem die Koordinaten
+`xr*xscale` und `‑yr*yscale`. Man beachte das Minuszeichen bei der Y-Koordinate.
 
 Mit Hilfe der SVG-Attribute `width`, `height` und `viewBox` lässt sich der sichtbare Ausschnitt und die Größe der SVG-Abbildung
-einstellen. Die Breite wird auf `(xrmax - xrmin)cm` und die Höhe auf `(yrmax - yrmin)cm` gesetzt. Das Attribut `viewBox` muss in
+einstellen. Die Breite wird auf `(xrmax‑xrmin)cm` und die Höhe auf `(yrmax‑yrmin)cm` gesetzt. Das Attribut `viewBox` muss in
 SVG-Koordinaten angegeben werden. Anhand der Abbildung erkennt man die Parameter
-`xmin*xscale -ymax*yscale (xrmax - xrmin)*xscale (yrmax - yrmin)*yscale`.
+`xmin*xscale ‑ymax*yscale (xrmax‑xrmin)*xscale (yrmax‑yrmin)*yscale`.
