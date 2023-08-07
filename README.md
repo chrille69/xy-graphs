@@ -131,7 +131,7 @@ lmschart stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklä
 ## SVG-Koordinaten und reale Werte
 Für die Abbildung der Wertekoordinaten auf SVG-Koordinaten ist folgende Abbildung hilfreich:
 
-<img src="https://github.com/chrille69/lmschart/assets/47904800/f33a473c-4c48-454e-bab9-1a98f43a7611" width="50%" >
+<img src="screenshots/svg-koordinaten.png" width="50%" >
 
 Die schwarzen Achsen stellen das Koordinatensystem der realen Werte dar, so wie es normalerweise gezeichnet wird (Y-Achse nach oben).
 Die roten Achsen stellen das SVG-Koordinatensystem dar. Die Ursprünge und X-Achsen der beiden Koordinatensysteme liegen übereinander.
