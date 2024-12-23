@@ -1,13 +1,13 @@
 var lmsChartTemplate = document.createElement('template')
-lmsChartTemplate.innerHTML = `<style>
+lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
     :host {
         --breite: 15cm;
         --hoehe: 10cm;
-        --ylabelbreite: 20px;
+        --ylabelbreite: 0px;
     }
     #lms-chart {
         display: inline-grid;
-        grid-template-columns: 2em auto auto;
+        grid-template-columns: var(--ylabelbreite) auto auto;
         grid-template-areas:
             ". . title"
             "ylabel yscale chart"
@@ -597,6 +597,15 @@ class LmsChartConfig {
     }
 }
 
+function slotChanged(event, styleelement) {
+    const tmpele = event.target.attributes["name"]
+    if (!!tmpele && tmpele.value == "ylabel") {
+        console.log(styleelement)
+        styleelement.setProperty('--ylabelbreite', '2em')
+    }
+}
+
+
 class LmsChart extends HTMLElement {
 
     connectedCallback() {
@@ -618,11 +627,7 @@ class LmsChart extends HTMLElement {
         finally {
             const schatten = this.attachShadow({mode: "open"})
             schatten.appendChild(this.template)
-
-            const tmpele = this.querySelector("[slot=ylabel]")
-            if (! tmpele) {
-                this.style.setProperty('--ylabelbreite', '0px')
-            }
+            schatten.addEventListener('slotchange', (event) => slotChanged(event, this.style))
         }
     }
 
