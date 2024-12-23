@@ -16,7 +16,6 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
             "ylabel yscale chart"
             ". . xscale"
             ". . xlabel";
-        position: relative;
     }
     #charterrorname, #charterrormessage, charterrorstack {
         font-family: Courier;
@@ -592,7 +591,6 @@ class LmsChartConfig {
 
         this.totalwidth = this.width*this.xscale
         this.totalheight = this.height*this.yscale
-        console.log(this.height, this.yscale, this.ysize, this.ydelta)
         this.totalxmin = this.xmin*this.xscale
         this.totalymin = this.ymin*this.yscale
         this.totalxmax = this.xmax*this.xscale
