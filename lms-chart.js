@@ -5,6 +5,9 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
         --hoehe: 10cm;
         --ylabelbreite: 0px;
     }
+    #chart-mit-overlay {
+        grid-area: chart;
+    }
     #lms-chart {
         display: inline-grid;
         grid-template-columns: var(--ylabelbreite) auto auto;
@@ -14,46 +17,6 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
             ". . xscale"
             ". . xlabel";
         position: relative;
-    }
-    .no-scaling-stroke {
-        vector-effect: non-scaling-stroke;
-    }
-    #lms-chart-grid, #lms-chart-subgrid {
-        fill: none;
-        stroke: grey;
-        stroke-width: 0.9pt;
-    }
-    #lms-chart-subgrid {
-        stroke-width: 0.3pt;
-    }
-    .graphpath {
-        fill: none;
-        stroke-width: 1.3pt;
-        vector-effect: non-scaling-stroke;
-    }
-    .legenditem {
-        display: flex;
-        align-items: center;
-    }
-    .axis {
-        fill: none;
-        stroke: black;
-        stroke-width: 1pt;
-    }
-    .label {
-        text-align: center;
-    }
-    .absolute {
-        position: absolute;
-    }
-    .relative {
-        position: relative;
-    }
-    .breite {
-        width: var(--breite);
-    }
-    .hoehe {
-        height:var(--hoehe)
     }
     #charterrorname, #charterrormessage, charterrorstack {
         font-family: Courier;
@@ -77,15 +40,7 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
         justify-content: flex-start;
         align-items: flex-start;
     }
-    #lms-chart-legend-frame {
-        background-color: white;
-        padding: 1mm;
-        border: 0.5pt solid gray;
-        border-radius: 2mm;
-    }
     #lms-chart-svg {
-        border: 1px solid grey;
-        overflow: visible;
         grid-area: chart;
     }
     #lms-chart-title {
@@ -101,14 +56,6 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
         margin-left: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
         margin-right: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
     }
-    ::slotted([slot=ylabel]) {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-    #chart-mit-overlay {
-        grid-area: chart;
-    }
     #lms-chart-x-scale {
         margin: 5px 0px;
         grid-area: xscale;
@@ -116,6 +63,61 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
     #lms-chart-y-scale {
         grid-area: yscale;
         margin: 0 0.5em;
+    }
+    .no-scaling-stroke {
+        vector-effect: non-scaling-stroke;
+    }
+    .absolute {
+        position: absolute;
+    }
+    .relative {
+        position: relative;
+    }
+    .breite {
+        width: var(--breite);
+    }
+    .hoehe {
+        height:var(--hoehe)
+    }
+    .chart-grid, .chart-subgrid {
+        fill: none;
+        stroke: grey;
+        stroke-width: 0.9pt;
+    }
+    .chart-subgrid {
+        stroke-width: 0.3pt;
+    }
+    .graphpath {
+        fill: none;
+        stroke-width: 1.3pt;
+        vector-effect: non-scaling-stroke;
+    }
+    .legenditem {
+        display: flex;
+        align-items: center;
+    }
+    .chart-xaxis, .chart-yaxis {
+        fill: none;
+        stroke: black;
+        stroke-width: 1pt;
+    }
+    .chart-titel, .chart-xlabel, chart-ylabel {
+        text-align: center;
+    }
+    .chart-legend-frame {
+        background-color: white;
+        padding: 1mm;
+        border: 0.5pt solid gray;
+        border-radius: 2mm;
+    }
+    .chart-svg {
+        border: 1px solid grey;
+        overflow: visible;
+    }
+    ::slotted([slot=ylabel]) {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     .yscalehidden, .xscalehidden {
         visibility: hidden;
@@ -139,14 +141,14 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
     <div id="charterrormessage"></div>
     <pre id="charterrorstack"></pre>
 </div>
-<div id="lms-chart">
-    <div id="lms-chart-title"><slot name="title" class="label breite"></slot></div>
-    <div id="lms-chart-xlabel"><slot name="xlabel" class="label breite"></slot></div>
-    <div id="lms-chart-ylabel"><slot name="ylabel" class="label"></slot></div>
+<div id="lms-chart" class="chart">
+    <div id="lms-chart-title"><slot name="title" class="chart-titel breite"></slot></div>
+    <div id="lms-chart-xlabel"><slot name="xlabel" class="chart-xlabel breite"></slot></div>
+    <div id="lms-chart-ylabel"><slot name="ylabel" class="chart-xlabel"></slot></div>
     <div id="lms-chart-y-scale" class="relative"></div>
     <div id="lms-chart-x-scale" class="relative"></div>
     <div id="chart-mit-overlay" class="relative breite hoehe">
-        <svg id="lms-chart-svg" class="absolute breite hoehe">
+        <svg id="lms-chart-svg" class="chart-svg absolute breite hoehe">
             <defs>
                 <marker id="lmsarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
                      refX="-10" refY="0" markerWidth="10" markerHeight="4" orient="auto">
@@ -155,25 +157,25 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
                 <clipPath id="clipgraph">
                     <rect id="clipgraphrect"></rect>
                 </clipPath>
-                <path class="symbol" id="lms-symbol-square" d="m-0.7071067 -0.7071067 h1.414213562373 v1.414213562373 h-1.414213562373 z"/>
-                <path class="symbol" id="lms-symbol-circle" d="m-1 0 a1 1 180 0 0 2 0 a1 1 180 0 0 -2 0 z" />
-                <path class="symbol" id="lms-symbol-cross" d="m-1 -1 l2 2 m-2 0 l2 -2" />
-                <path class="symbol" id="lms-symbol-diamond" d="m-1 0 l1 1 l1 -1 l-1 -1 z" />
-                <path class="symbol" id="lms-symbol-triangle" d="m0 -0.75 l0.86602540378 1.5 l-1.732050808 0 z" />
-                <path class="symbol" id="lms-symbol-line" d="m-1 0 l2 0" />
+                <path class="symbol" id="chart-symbol-square" d="m-0.7071067 -0.7071067 h1.414213562373 v1.414213562373 h-1.414213562373 z"/>
+                <path class="symbol" id="chart-symbol-circle" d="m-1 0 a1 1 180 0 0 2 0 a1 1 180 0 0 -2 0 z" />
+                <path class="symbol" id="chart-symbol-cross" d="m-1 -1 l2 2 m-2 0 l2 -2" />
+                <path class="symbol" id="chart-symbol-diamond" d="m-1 0 l1 1 l1 -1 l-1 -1 z" />
+                <path class="symbol" id="chart-symbol-triangle" d="m0 -0.75 l0.86602540378 1.5 l-1.732050808 0 z" />
+                <path class="symbol" id="chart-symbol-line" d="m-1 0 l2 0" />
             </defs>
-            <g id="lms-chart-grids">
-                <path class="no-scaling-stroke" id="lms-chart-grid"></path>
-                <path class="no-scaling-stroke" id="lms-chart-subgrid"></path>
+            <g id="lms-chart-grids" class="chart-grids">
+                <path id="lms-chart-grid" class="no-scaling-stroke chart-grid"></path>
+                <path id="lms-chart-subgrid" class="no-scaling-stroke chart-subgrid"></path>
             </g>
             <g id="lms-chart-graphs" clip-path ="url(#clipgraph)"></g>
-            <g id="lms-chart-axis">
-                <line id="lms-chart-x-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
-                <line id="lms-chart-y-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+            <g id="lms-chart-axis" class="chart-axis">
+                <line id="lms-chart-xaxis" class="chart-xaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+                <line id="lms-chart-yaxis" class="chart-yaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
             </g>
         </svg>
         <div id="lms-chart-legend" class="absolute">
-            <div id="lms-chart-legend-frame">
+            <div class="chart-legend-frame">
                 <slot name="legend-before" id="lms-chart-legend-before"></slot>
                 <div id="lms-chart-legend-list"></div>
                 <slot name="legend-after" id="lms-chart-legend-after"></slot>
@@ -282,7 +284,7 @@ class LmsChartSvg {
         for (let i=0; i<values.length; i++) {
             const point = this.tupelToPoint(values[i])
             const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
-            use.setAttribute('href',`#lms-symbol-${symbol}`)
+            use.setAttribute('href',`#chart-symbol-${symbol}`)
             use.setAttribute('x', point.x)
             use.setAttribute('y', point.y)
             use.setAttribute('transform-origin', `${point.x} ${point.y}`)
@@ -392,7 +394,7 @@ class LmsChartSvg {
     }
 
     drawXaxis() {
-        const element = this.svg.getElementById("lms-chart-x-axis")
+        const element = this.svg.getElementById("lms-chart-xaxis")
         element.setAttribute("x1", this.config.totalxmin)
         element.setAttribute("y1", 0)
         element.setAttribute("x2", this.config.totalxmax-10*this.linienbreite)
@@ -400,7 +402,7 @@ class LmsChartSvg {
     }
 
     drawYaxis() {
-        const element = this.svg.getElementById("lms-chart-y-axis")
+        const element = this.svg.getElementById("lms-chart-yaxis")
         element.setAttribute("x1", 0)
         element.setAttribute("y1", -this.config.totalymin)
         element.setAttribute("x2", 0)
@@ -590,6 +592,7 @@ class LmsChartConfig {
 
         this.totalwidth = this.width*this.xscale
         this.totalheight = this.height*this.yscale
+        console.log(this.height, this.yscale, this.ysize, this.ydelta)
         this.totalxmin = this.xmin*this.xscale
         this.totalymin = this.ymin*this.yscale
         this.totalxmax = this.xmax*this.xscale
@@ -600,7 +603,6 @@ class LmsChartConfig {
 function slotChanged(event, styleelement) {
     const tmpele = event.target.attributes["name"]
     if (!!tmpele && tmpele.value == "ylabel") {
-        console.log(styleelement)
         styleelement.setProperty('--ylabelbreite', '2em')
     }
 }
