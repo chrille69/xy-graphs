@@ -125,10 +125,12 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
         width:100%;
         text-align: center;
         top: 0;
+        z-index: -10;
     }
     .yscale {
         line-height: var(--hoehe);
         vertical-align: middle;
+        z-index: -10;
     }
     .symbol {
         vector-effect: non-scaling-stroke;
