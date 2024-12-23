@@ -7,7 +7,7 @@ lmsChartTemplate.innerHTML = `<style>
     }
     #lms-chart {
         display: inline-grid;
-        grid-template-columns: auto auto auto;
+        grid-template-columns: 2em auto auto;
         grid-template-areas:
             ". . title"
             "ylabel yscale chart"
@@ -77,7 +77,7 @@ lmsChartTemplate.innerHTML = `<style>
         justify-content: flex-start;
         align-items: flex-start;
     }
-    #lms-chart-legend-container {
+    #lms-chart-legend-frame {
         background-color: white;
         padding: 1mm;
         border: 0.5pt solid gray;
@@ -97,7 +97,6 @@ lmsChartTemplate.innerHTML = `<style>
     #lms-chart-ylabel {
         grid-area: ylabel;
         align-self: center;
-        width: var(--hoehe);
         rotate: 270deg;
         margin-left: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
         margin-right: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
@@ -111,11 +110,12 @@ lmsChartTemplate.innerHTML = `<style>
         grid-area: chart;
     }
     #lms-chart-x-scale {
+        margin: 5px 0px;
         grid-area: xscale;
     }
     #lms-chart-y-scale {
         grid-area: yscale;
-        padding: 0 0.5em;
+        margin: 0 0.5em;
     }
     .yscalehidden, .xscalehidden {
         visibility: hidden;
@@ -172,7 +172,13 @@ lmsChartTemplate.innerHTML = `<style>
                 <line id="lms-chart-y-axis" class="axis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
             </g>
         </svg>
-        <div id="lms-chart-legend" class="absolute"><div id="lms-chart-legend-container"><slot name="legend-before"></slot><div id="lms-chart-legend-list"></div><slot name="legend-after"></slot></div></div>
+        <div id="lms-chart-legend" class="absolute">
+            <div id="lms-chart-legend-frame">
+                <slot name="legend-before" id="lms-chart-legend-before"></slot>
+                <div id="lms-chart-legend-list"></div>
+                <slot name="legend-after" id="lms-chart-legend-after"></slot>
+            </div>
+        </div>
         <div id="standardslot" class="absolute breite"><slot></slot></div>
         <div id="lms-chart-error" class="absolute breite"><slot name="error"></slot></div>
     </div>
@@ -184,7 +190,10 @@ class ChartError extends Error {}
 class LmsChartSvg {
     constructor(config, element) {
         this.config = config
-        this.legendcontainer = element.getElementById("lms-chart-legend-list")
+        this.legend = element.getElementById("lms-chart-legend")
+        this.legendlist = element.getElementById("lms-chart-legend-list")
+        this.legendbefore = element.getElementById("lms-chart-legend-before")
+        this.legendafter = element.getElementById("lms-chart-legend-after")
         this.svg = element.getElementById("lms-chart-svg")
         this.graphgroup = element.getElementById("lms-chart-graphs")
 
@@ -350,7 +359,7 @@ class LmsChartSvg {
 
     appendLegendItem(info) {
         const div = document.createElement('div')
-        this.legendcontainer.appendChild(div)
+        this.legendlist.appendChild(div)
         div.classList.add('legenditem')
         const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         symbolsvg.setAttribute('width', '5mm')
@@ -364,6 +373,22 @@ class LmsChartSvg {
         element.style['fill'] = info.fillcolor
         element.style['stroke-width'] = info.linewidth
         div.innerHTML += `<div>${info.name ? info.name : (info.expr ? info.expr : info.id)}</div>`
+    }
+
+    hasEmptyLegend() {
+        return this.hasEmptyLegendList() && this.hasEmptyLegendSlots()
+    }
+
+    hasEmptyLegendList() {
+        return this.legendlist.childElementCount == 0
+    }
+
+    hasEmptyLegendSlots() {
+        return this.legendbefore.childElementCount == 0 && this.legendafter.childElementCount == 0
+    }
+
+    hideLegend() {
+        this.legend.style.visibility = "hidden"
     }
 
     drawXaxis() {
@@ -460,6 +485,9 @@ class LmsChartContainer {
                     throw err
             }
         }
+        if (this.lmschartsvg.hasEmptyLegendList()) {
+            this.lmschartsvg.hideLegend()
+        }
     }
 
     configureXscale() {
@@ -475,7 +503,7 @@ class LmsChartContainer {
         const yskala = this.element.getElementById("lms-chart-y-scale")
         for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
             if (i != 0) {
-                yskala.innerHTML += `<div class="yscale absolute" style="right: 0.5em; top: ${this.config.totalymax-i*this.config.yscale-0.5*this.config.totalheight}cm;">${i.toLocaleString('de-DE')}</div>`
+                yskala.innerHTML += `<div class="yscale absolute" style="right: 0em; top: ${this.config.totalymax-i*this.config.yscale-0.5*this.config.totalheight}cm;">${i.toLocaleString('de-DE')}</div>`
                 yskala.innerHTML += `<div class="yscalehidden">${i.toLocaleString('de-DE')}</div>`
             }
         }
