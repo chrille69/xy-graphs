@@ -55,11 +55,11 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
         margin-left: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
         margin-right: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
     }
-    #lms-chart-x-scale {
+    #lms-chart-xscale {
         margin: 5px 0px;
         grid-area: xscale;
     }
-    #lms-chart-y-scale {
+    #lms-chart-yscale {
         grid-area: yscale;
         margin: 0 0.5em;
     }
@@ -146,8 +146,8 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
     <div id="lms-chart-title"><slot name="title" class="chart-titel breite"></slot></div>
     <div id="lms-chart-xlabel"><slot name="xlabel" class="chart-xlabel breite"></slot></div>
     <div id="lms-chart-ylabel"><slot name="ylabel" class="chart-xlabel"></slot></div>
-    <div id="lms-chart-y-scale" class="relative"></div>
-    <div id="lms-chart-x-scale" class="relative"></div>
+    <div id="lms-chart-yscale" part="yscale" class="relative"></div>
+    <div id="lms-chart-xscale" part="xscale" class="relative"></div>
     <div id="chart-mit-overlay" class="relative breite hoehe">
         <svg id="lms-chart-svg" class="chart-svg absolute breite hoehe">
             <defs>
@@ -166,17 +166,17 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
                 <path class="symbol" id="chart-symbol-line" d="m-1 0 l2 0" />
             </defs>
             <g id="lms-chart-grids" class="chart-grids">
-                <path id="lms-chart-grid" class="no-scaling-stroke chart-grid"></path>
-                <path id="lms-chart-subgrid" class="no-scaling-stroke chart-subgrid"></path>
+                <path id="lms-chart-grid" part="grid" class="no-scaling-stroke chart-grid"></path>
+                <path id="lms-chart-subgrid" part="subgrid" class="no-scaling-stroke chart-subgrid"></path>
             </g>
             <g id="lms-chart-graphs" clip-path ="url(#clipgraph)"></g>
             <g id="lms-chart-axis" class="chart-axis">
-                <line id="lms-chart-xaxis" class="chart-xaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
-                <line id="lms-chart-yaxis" class="chart-yaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+                <line id="lms-chart-xaxis" part="xaxis" class="chart-xaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+                <line id="lms-chart-yaxis" part="yaxis" class="chart-yaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
             </g>
         </svg>
-        <div id="lms-chart-legend" class="absolute">
-            <div class="chart-legend-frame">
+        <div id="lms-chart-legend" part="legend" class="absolute">
+            <div class="chart-legend-frame" part="legendframe">
                 <slot name="legend-before" id="lms-chart-legend-before"></slot>
                 <div id="lms-chart-legend-list"></div>
                 <slot name="legend-after" id="lms-chart-legend-after"></slot>
@@ -242,6 +242,7 @@ class LmsChartSvg {
 
     appendGraph(graphinfo) {
         const elements = []
+
         if (graphinfo['values'] !== null) {
             let values
             try {
@@ -249,11 +250,11 @@ class LmsChartSvg {
             } catch (error) {
                 throw new ChartError(error.message)
             }
-            elements[0] = this.createGraphElement(values, graphinfo.symbol, graphinfo.symbolsize)
+            elements[0] = this.createGraphElement(values, graphinfo)
         }
         if (graphinfo['expr'] !== null) {
             const values = this.createValuesFromFunction(graphinfo)
-            elements[1] = this.createGraphElement(values, graphinfo.symbol, graphinfo.symbolsize)
+            elements[1] = this.createGraphElement(values, graphinfo)
         }
 
         for (let element of elements) {
@@ -262,21 +263,22 @@ class LmsChartSvg {
             
             element.classList.add('graphpath')
             element.style['stroke'] = graphinfo.strokecolor
-            element.style['fill'] = graphinfo.fillcolor
-            element.style['stroke-width'] = graphinfo.linewidth
+            element.style['stroke-width'] = '1.3pt'
             this.graphgroup.appendChild(element)
         }
     }
 
-    createGraphElement(values, symbol, size) {
-        if (symbol == 'line')
-            return this.createPathElement(values)
+    createGraphElement(values, graphinfo) {
+        if (graphinfo.symbol == 'line')
+            return this.createPathElement(values, graphinfo)
         else {
-            return this.createSymbolGroup(values, symbol, size)
+            return this.createSymbolGroup(values, graphinfo)
         }
     }
 
-    createSymbolGroup(values, symbol, size) {
+    createSymbolGroup(values, graphinfo, sizeoverride) {
+        const symbol = graphinfo.symbol
+        const size = sizeoverride ? sizeoverride : graphinfo.symbolsize
 
         if (! Array.isArray(values))
             throw new ChartError(`values muss ein zweidimensionales Array sein.`)
@@ -289,13 +291,14 @@ class LmsChartSvg {
             use.setAttribute('x', point.x)
             use.setAttribute('y', point.y)
             use.setAttribute('transform-origin', `${point.x} ${point.y}`)
+            use.setAttribute('part', `graph${graphinfo.id}`)
             use.style['transform'] = `scale(${size})`
             group.appendChild(use)
         }
         return group
     }
 
-    createPathElement(values) {
+    createPathElement(values, graphinfo) {
 
         if (! Array.isArray(values))
             throw new ChartError(`values muss ein zweidimensionales Array sein.`)
@@ -308,6 +311,7 @@ class LmsChartSvg {
             dpath += ` L${point.x} ${point.y}`
         }
         path.setAttribute("d", dpath)
+        path.setAttribute('part', `graph${graphinfo.id}`)
         return path
     }
 
@@ -364,17 +368,17 @@ class LmsChartSvg {
         const div = document.createElement('div')
         this.legendlist.appendChild(div)
         div.classList.add('legenditem')
+        div.setAttribute('part',`legenditem${info.id}`)
         const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         symbolsvg.setAttribute('width', '5mm')
         symbolsvg.setAttribute('height', '5mm')
         symbolsvg.setAttribute('viewBox','-1.5 -1.25 3 2.5')
         div.appendChild(symbolsvg)
-        const element = this.createSymbolGroup([[0,0]], info.symbol)
+        const element = this.createSymbolGroup([[0,0]], info, 1)
         symbolsvg.appendChild(element)
         element.classList.add('graphpath')
         element.style['stroke'] = info.strokecolor
-        element.style['fill'] = info.fillcolor
-        element.style['stroke-width'] = info.linewidth
+        element.style['stroke-width'] = '1.3pt'
         div.innerHTML += `<div>${info.name ? info.name : (info.expr ? info.expr : info.id)}</div>`
     }
 
@@ -475,8 +479,7 @@ class LmsChartContainer {
     appendGraphPaths(graphs) {
         for (let graph of Object.values(graphs).sort((a,b) => a.order - b.order)) {
             try {
-                if (! graph.strokecolor)
-                    graph.strokecolor = this.colorlist.length > 0 ? this.colorlist.shift() : 'black'
+                graph.strokecolor = this.colorlist.length > 0 ? this.colorlist.shift() : 'black'
                 if (! graphs['nolegend'])
                     this.lmschartsvg.appendLegendItem(graph)
                 this.lmschartsvg.appendGraph(graph)
@@ -494,7 +497,7 @@ class LmsChartContainer {
     }
 
     configureXscale() {
-        const xskala = this.element.getElementById("lms-chart-x-scale")
+        const xskala = this.element.getElementById("lms-chart-xscale")
         for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
             if (i != 0)
                 xskala.innerHTML += `<div class="xscale absolute" style="left: ${i*this.config.xscale-0.5*this.config.totalwidth-this.config.totalxmin}cm;">${i.toLocaleString('de-DE')}</div>`
@@ -503,7 +506,7 @@ class LmsChartContainer {
     }
 
     configureYscale() {
-        const yskala = this.element.getElementById("lms-chart-y-scale")
+        const yskala = this.element.getElementById("lms-chart-yscale")
         for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
             if (i != 0) {
                 yskala.innerHTML += `<div class="yscale absolute" style="right: 0em; top: ${this.config.totalymax-i*this.config.yscale-0.5*this.config.totalheight}cm;">${i.toLocaleString('de-DE')}</div>`
@@ -663,10 +666,7 @@ class LmsChart extends HTMLElement {
             start: null,
             end: null,
             step: null,
-            fillcolor: null,
-            strokecolor: null,
             symbol: 'line',
-            linewidth: '1.3pt',
             symbolsize: 0.15,
             nolegend: false,
             name: null
