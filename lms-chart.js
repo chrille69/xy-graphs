@@ -537,6 +537,12 @@ class LmsChartConfig {
     constructor(configobject) {
         Object.assign(this, configobject)
 
+        for (let prop of ['xmax','xmin','ymax','ymin']) {
+            this[prop] = parseFloat(this[prop])
+            if (isNaN(this[prop]))
+                throw new ChartError(`${prop} muss eine Zahl sein.`)
+        }
+
         for (let prop of ['xsize','ysize','xdelta','ydelta','xsubdelta','ysubdelta']) {
             this[prop] = parseFloat(this[prop])
             if (isNaN(this[prop]) || this[prop] <= 0)
@@ -646,6 +652,7 @@ class LmsChart extends HTMLElement {
         }
 
         this.config = new LmsChartConfig(this.configobject)
+
         this.setCSSVariables()
         const lmschartcontainer = new LmsChartContainer(this.config, this.template, (msg) => this.errormessage(msg))
         lmschartcontainer.appendGraphPaths(this.graphs)
