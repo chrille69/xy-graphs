@@ -85,7 +85,7 @@ lmschart stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklä
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
 
 ## Beispiele
-### Gitter ohne Diagramm
+### Gitter ohne Graph
 ```html
 <lms-chart grid-legendposition="none"></lms-chart>
 ```
