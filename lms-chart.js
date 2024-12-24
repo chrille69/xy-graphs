@@ -158,12 +158,12 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
                 <clipPath id="clipgraph">
                     <rect id="clipgraphrect"></rect>
                 </clipPath>
-                <path class="symbol" id="chart-symbol-square" d="m-0.7071067 -0.7071067 h1.414213562373 v1.414213562373 h-1.414213562373 z"/>
-                <path class="symbol" id="chart-symbol-circle" d="m-1 0 a1 1 180 0 0 2 0 a1 1 180 0 0 -2 0 z" />
-                <path class="symbol" id="chart-symbol-cross" d="m-1 -1 l2 2 m-2 0 l2 -2" />
-                <path class="symbol" id="chart-symbol-diamond" d="m-1 0 l1 1 l1 -1 l-1 -1 z" />
-                <path class="symbol" id="chart-symbol-triangle" d="m0 -0.75 l0.86602540378 1.5 l-1.732050808 0 z" />
-                <path class="symbol" id="chart-symbol-line" d="m-1 0 l2 0" />
+                <path class="symbol" id="chart-symbol-square" d="m-0.106066017 -0.106066017 h0.212132034 v0.212132034 h-0.212132034 z"/>
+                <path class="symbol" id="chart-symbol-circle" d="m-0.15 0 a0.15 0.15 180 0 0 0.3 0 a0.15 0.15 180 0 0 -0.3 0 z" />
+                <path class="symbol" id="chart-symbol-cross" d="m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3" />
+                <path class="symbol" id="chart-symbol-diamond" d="m-0.15 0 l0.15 0.15 l0.15 -0.15 l-0.15 -0.15 z" />
+                <path class="symbol" id="chart-symbol-triangle" d="m0 -0.1125 l0.12990381 0.225 l-0.259807621 0 z" />
+                <path class="symbol" id="chart-symbol-line" d="m-0.15 0 l0.3 0" />
             </defs>
             <g id="lms-chart-grids" class="chart-grids">
                 <path id="lms-chart-grid" part="grid" class="no-scaling-stroke chart-grid"></path>
@@ -276,9 +276,8 @@ class LmsChartSvg {
         }
     }
 
-    createSymbolGroup(values, graphinfo, sizeoverride) {
+    createSymbolGroup(values, graphinfo) {
         const symbol = graphinfo.symbol
-        const size = sizeoverride ? sizeoverride : graphinfo.symbolsize
 
         if (! Array.isArray(values))
             throw new ChartError(`values muss ein zweidimensionales Array sein.`)
@@ -292,7 +291,6 @@ class LmsChartSvg {
             use.setAttribute('y', point.y)
             use.setAttribute('transform-origin', `${point.x} ${point.y}`)
             use.setAttribute('part', `graph${graphinfo.id}`)
-            use.style['transform'] = `scale(${size})`
             group.appendChild(use)
         }
         return group
@@ -370,11 +368,11 @@ class LmsChartSvg {
         div.classList.add('legenditem')
         div.setAttribute('part',`legenditem${info.id}`)
         const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        symbolsvg.setAttribute('width', '5mm')
-        symbolsvg.setAttribute('height', '5mm')
-        symbolsvg.setAttribute('viewBox','-1.5 -1.25 3 2.5')
+        symbolsvg.setAttribute('width', '0.5cm')
+        symbolsvg.setAttribute('height', '0.5cm')
+        symbolsvg.setAttribute('viewBox', `-0.225 -0.1875 0.45 .375`)
         div.appendChild(symbolsvg)
-        const element = this.createSymbolGroup([[0,0]], info, 1)
+        const element = this.createSymbolGroup([[0,0]], info, true)
         symbolsvg.appendChild(element)
         element.classList.add('graphpath')
         element.style['stroke'] = info.strokecolor
@@ -491,7 +489,7 @@ class LmsChartContainer {
                     throw err
             }
         }
-        if (this.lmschartsvg.hasEmptyLegendList()) {
+        if (this.lmschartsvg.hasEmptyLegend()) {
             this.lmschartsvg.hideLegend()
         }
     }
@@ -667,7 +665,7 @@ class LmsChart extends HTMLElement {
             end: null,
             step: null,
             symbol: 'line',
-            symbolsize: 0.15,
+            symbolsize: 1,
             nolegend: false,
             name: null
         }
