@@ -1,14 +1,14 @@
-var lmsChartTemplate = document.createElement('template')
-lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
+var xyChartTemplate = document.createElement('template')
+xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     :host {
         --breite: 15cm;
         --hoehe: 10cm;
         --ylabelbreite: 0px;
     }
-    #chart-mit-overlay {
+    #overlaycontainer {
         grid-area: chart;
     }
-    #lms-chart {
+    #chart {
         display: inline-grid;
         grid-template-columns: var(--ylabelbreite) auto auto;
         grid-template-areas:
@@ -24,12 +24,12 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
         background-color: red;
         color: white;
     }
-    #lms-chart-error {
+    #error {
         background-color: red;
         color: white;
         font-family: 'Courier New', Courier, monospace;
     }
-    #lms-chart-legend {
+    #legend {
         --xpad: 2mm;
         --ypad: 2mm;
         width: calc(var(--breite) - 2 * var(--xpad));
@@ -39,27 +39,27 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
         justify-content: flex-start;
         align-items: flex-start;
     }
-    #lms-chart-svg {
+    #svg {
         grid-area: chart;
     }
-    #lms-chart-title {
+    #title {
         grid-area: title;
     }
-    #lms-chart-xlabel {
+    #xlabel {
         grid-area: xlabel;
     }
-    #lms-chart-ylabel {
+    #ylabel {
         grid-area: ylabel;
         align-self: center;
         rotate: 270deg;
         margin-left: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
         margin-right: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
     }
-    #lms-chart-xscale {
+    #xscale {
         margin: 5px 0px;
         grid-area: xscale;
     }
-    #lms-chart-yscale {
+    #yscale {
         grid-area: yscale;
         margin: 0 0.5em;
     }
@@ -78,12 +78,12 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
     .hoehe {
         height:var(--hoehe)
     }
-    .chart-grid, .chart-subgrid {
+    .grid, .subgrid {
         fill: none;
         stroke: grey;
         stroke-width: 0.9pt;
     }
-    .chart-subgrid {
+    .subgrid {
         stroke-width: 0.3pt;
     }
     .graphpath {
@@ -95,21 +95,21 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
         display: flex;
         align-items: center;
     }
-    .chart-xaxis, .chart-yaxis {
+    .xaxis, .yaxis {
         fill: none;
         stroke: black;
         stroke-width: 1pt;
     }
-    .chart-titel, .chart-xlabel, chart-ylabel {
+    .titel, .xlabel, ylabel {
         text-align: center;
     }
-    .chart-legend-frame {
+    .legend-frame {
         background-color: white;
         padding: 1mm;
         border: 0.5pt solid gray;
         border-radius: 2mm;
     }
-    .chart-svg {
+    .svg {
         border: 1px solid grey;
         overflow: visible;
     }
@@ -142,14 +142,14 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
     <div id="charterrormessage"></div>
     <pre id="charterrorstack"></pre>
 </div>
-<div id="lms-chart" class="chart">
-    <div id="lms-chart-title"><slot name="title" class="chart-titel breite"></slot></div>
-    <div id="lms-chart-xlabel"><slot name="xlabel" class="chart-xlabel breite"></slot></div>
-    <div id="lms-chart-ylabel"><slot name="ylabel" class="chart-xlabel"></slot></div>
-    <div id="lms-chart-yscale" part="yscale" class="relative"></div>
-    <div id="lms-chart-xscale" part="xscale" class="relative"></div>
-    <div id="chart-mit-overlay" class="relative breite hoehe">
-        <svg id="lms-chart-svg" class="chart-svg absolute breite hoehe">
+<div id="chart" class="chart">
+    <div id="title"><slot name="title" class="titel breite"></slot></div>
+    <div id="xlabel"><slot name="xlabel" class="xlabel breite"></slot></div>
+    <div id="ylabel"><slot name="ylabel" class="xlabel"></slot></div>
+    <div id="yscale" part="yscale" class="relative"></div>
+    <div id="xscale" part="xscale" class="relative"></div>
+    <div id="overlaycontainer" class="relative breite hoehe">
+        <svg id="svg" class="svg absolute breite hoehe">
             <defs>
                 <marker id="lmsarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
                      refX="-10" refY="0" markerWidth="10" markerHeight="4" orient="auto">
@@ -158,54 +158,54 @@ lmsChartTemplate.innerHTML = `<style id="lmschartstyle">
                 <clipPath id="clipgraph">
                     <rect id="clipgraphrect"></rect>
                 </clipPath>
-                <path class="symbol" id="chart-symbol-square" d="m-0.106066017 -0.106066017 h0.212132034 v0.212132034 h-0.212132034 z"/>
-                <path class="symbol" id="chart-symbol-circle" d="m-0.15 0 a0.15 0.15 180 0 0 0.3 0 a0.15 0.15 180 0 0 -0.3 0 z" />
-                <path class="symbol" id="chart-symbol-cross" d="m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3" />
-                <path class="symbol" id="chart-symbol-diamond" d="m-0.15 0 l0.15 0.15 l0.15 -0.15 l-0.15 -0.15 z" />
-                <path class="symbol" id="chart-symbol-triangle" d="m0 -0.1125 l0.12990381 0.225 l-0.259807621 0 z" />
-                <path class="symbol" id="chart-symbol-line" d="m-0.15 0 l0.3 0" />
+                <path class="symbol" id="symbol-square" d="m-0.106066017 -0.106066017 h0.212132034 v0.212132034 h-0.212132034 z"/>
+                <path class="symbol" id="symbol-circle" d="m-0.15 0 a0.15 0.15 180 0 0 0.3 0 a0.15 0.15 180 0 0 -0.3 0 z" />
+                <path class="symbol" id="symbol-cross" d="m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3" />
+                <path class="symbol" id="symbol-diamond" d="m-0.15 0 l0.15 0.15 l0.15 -0.15 l-0.15 -0.15 z" />
+                <path class="symbol" id="symbol-triangle" d="m0 -0.1125 l0.12990381 0.225 l-0.259807621 0 z" />
+                <path class="symbol" id="symbol-line" d="m-0.15 0 l0.3 0" />
             </defs>
-            <g id="lms-chart-grids" class="chart-grids">
-                <path id="lms-chart-grid" part="grid" class="no-scaling-stroke chart-grid"></path>
-                <path id="lms-chart-subgrid" part="subgrid" class="no-scaling-stroke chart-subgrid"></path>
+            <g id="grids" class="grids">
+                <path id="grid" part="grid" class="no-scaling-stroke grid"></path>
+                <path id="subgrid" part="subgrid" class="no-scaling-stroke subgrid"></path>
             </g>
-            <g id="lms-chart-graphs" clip-path ="url(#clipgraph)"></g>
-            <g id="lms-chart-axis" class="chart-axis">
-                <line id="lms-chart-xaxis" part="xaxis" class="chart-xaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
-                <line id="lms-chart-yaxis" part="yaxis" class="chart-yaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+            <g id="graphs" clip-path ="url(#clipgraph)"></g>
+            <g id="axis" class="axis">
+                <line id="xaxis" part="xaxis" class="xaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+                <line id="yaxis" part="yaxis" class="yaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
             </g>
         </svg>
-        <div id="lms-chart-legend" part="legend" class="absolute">
-            <div class="chart-legend-frame" part="legendframe">
-                <slot name="legend-before" id="lms-chart-legend-before"></slot>
-                <div id="lms-chart-legend-list"></div>
-                <slot name="legend-after" id="lms-chart-legend-after"></slot>
+        <div id="legend" part="legend" class="absolute">
+            <div class="legend-frame" part="legendframe">
+                <slot name="legend-before" id="legend-before"></slot>
+                <div id="legend-list"></div>
+                <slot name="legend-after" id="legend-after"></slot>
             </div>
         </div>
         <div id="standardslot" class="absolute breite"><slot></slot></div>
-        <div id="lms-chart-error" class="absolute breite"><slot name="error"></slot></div>
+        <div id="error" class="absolute breite"><slot name="error"></slot></div>
     </div>
 </div>`
 
 
 class ChartError extends Error {}
 
-class LmsChartSvg {
+class ChartSvg {
     constructor(config, element) {
         this.config = config
-        this.legend = element.getElementById("lms-chart-legend")
-        this.legendlist = element.getElementById("lms-chart-legend-list")
-        this.legendbefore = element.getElementById("lms-chart-legend-before")
-        this.legendafter = element.getElementById("lms-chart-legend-after")
-        this.svg = element.getElementById("lms-chart-svg")
-        this.graphgroup = element.getElementById("lms-chart-graphs")
+        this.legend = element.getElementById("legend")
+        this.legendlist = element.getElementById("legend-list")
+        this.legendbefore = element.getElementById("legend-before")
+        this.legendafter = element.getElementById("legend-after")
+        this.svg = element.getElementById("svg")
+        this.graphgroup = element.getElementById("graphs")
 
         this.svg.setAttribute("preserveAspectRatio", 'none')
         this.svg.setAttribute("viewBox", `${this.config.totalxmin} ${-this.config.totalymax} ${this.config.totalwidth} ${this.config.totalheight}`)
         this.svg.setAttribute("width", `${this.config.totalwidth}cm`)
         this.svg.setAttribute("height", `${this.config.totalheight}cm`)
 
-        this.linienbreite = 0.0352777778 // 1pt in cm
+        this.linewidth = 0.0352777778 // 1pt in cm
 
         this.drawSubgrid()
         this.drawGrid()
@@ -277,7 +277,6 @@ class LmsChartSvg {
     }
 
     createSymbolGroup(values, graphinfo) {
-        const symbol = graphinfo.symbol
 
         if (! Array.isArray(values))
             throw new ChartError(`values muss ein zweidimensionales Array sein.`)
@@ -286,13 +285,14 @@ class LmsChartSvg {
         for (let i=0; i<values.length; i++) {
             const point = this.tupelToPoint(values[i])
             const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
-            use.setAttribute('href',`#chart-symbol-${symbol}`)
+            use.setAttribute('href',`#symbol-${graphinfo.symbol}`)
             use.setAttribute('x', point.x)
             use.setAttribute('y', point.y)
             use.setAttribute('transform-origin', `${point.x} ${point.y}`)
             use.setAttribute('part', `graph${graphinfo.id}`)
             group.appendChild(use)
         }
+
         return group
     }
 
@@ -318,7 +318,7 @@ class LmsChartSvg {
             return []
         
         if (typeof math === 'undefined') {
-            throw new ChartError('Für Funktionen benötigt lmschart die Javascript-Bibliothek <a href="https://mathjs.org/">mathjs</a>')
+            throw new ChartError('Für Funktionen benötigt xy-graphs die Javascript-Bibliothek <a href="https://mathjs.org/">mathjs</a>')
         }
         let start, end, step, tupel = []
         if (graphinfo.start === null)
@@ -397,19 +397,19 @@ class LmsChartSvg {
     }
 
     drawXaxis() {
-        const element = this.svg.getElementById("lms-chart-xaxis")
+        const element = this.svg.getElementById("xaxis")
         element.setAttribute("x1", this.config.totalxmin)
         element.setAttribute("y1", 0)
-        element.setAttribute("x2", this.config.totalxmax-10*this.linienbreite)
+        element.setAttribute("x2", this.config.totalxmax-10*this.linewidth)
         element.setAttribute("y2", 0)
     }
 
     drawYaxis() {
-        const element = this.svg.getElementById("lms-chart-yaxis")
+        const element = this.svg.getElementById("yaxis")
         element.setAttribute("x1", 0)
         element.setAttribute("y1", -this.config.totalymin)
         element.setAttribute("x2", 0)
-        element.setAttribute("y2", -this.config.totalymax + 10*this.linienbreite)
+        element.setAttribute("y2", -this.config.totalymax + 10*this.linewidth)
     }
 
     drawGrid() {
@@ -430,7 +430,7 @@ class LmsChartSvg {
         if (! dgrid)
             return
         
-        const element = this.svg.getElementById("lms-chart-grid")
+        const element = this.svg.getElementById("grid")
         element.setAttribute("d", dgrid)
     }
 
@@ -452,19 +452,19 @@ class LmsChartSvg {
         if (! dsubgrid)
             return
 
-        const element = this.svg.getElementById("lms-chart-subgrid")
+        const element = this.svg.getElementById("subgrid")
         element.setAttribute("d", dsubgrid)
     }
 }
 
-class LmsChartContainer {
+class ChartContainer {
     constructor(config, element, errorfunc) {
         this.config = config
         this.element = element
         this.errorfunc = errorfunc
         this.colorlist = ['blue','red','green','magenta','cyan','purple','orange']
 
-        this.lmschartsvg = new LmsChartSvg(this.config, this.element)
+        this.chartsvg = new ChartSvg(this.config, this.element)
 
         if (! this.config.xhidescale)
             this.configureXscale()
@@ -479,8 +479,8 @@ class LmsChartContainer {
             try {
                 graph.strokecolor = this.colorlist.length > 0 ? this.colorlist.shift() : 'black'
                 if (! graphs['nolegend'])
-                    this.lmschartsvg.appendLegendItem(graph)
-                this.lmschartsvg.appendGraph(graph)
+                    this.chartsvg.appendLegendItem(graph)
+                this.chartsvg.appendGraph(graph)
             }
             catch(err) {
                 if (err instanceof ChartError) 
@@ -489,32 +489,32 @@ class LmsChartContainer {
                     throw err
             }
         }
-        if (this.lmschartsvg.hasEmptyLegend()) {
-            this.lmschartsvg.hideLegend()
+        if (this.chartsvg.hasEmptyLegend()) {
+            this.chartsvg.hideLegend()
         }
     }
 
     configureXscale() {
-        const xskala = this.element.getElementById("lms-chart-xscale")
+        const xscale = this.element.getElementById("xscale")
         for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
             if (i != 0)
-                xskala.innerHTML += `<div class="xscale absolute" style="left: ${i*this.config.xscale-0.5*this.config.totalwidth-this.config.totalxmin}cm;">${i.toLocaleString('de-DE')}</div>`
+                xscale.innerHTML += `<div class="xscale absolute" style="left: ${i*this.config.xscale-0.5*this.config.totalwidth-this.config.totalxmin}cm;">${i.toLocaleString('de-DE')}</div>`
         }
-        xskala.innerHTML += `<div class="xscalehidden">Mg</div>`
+        xscale.innerHTML += `<div class="xscalehidden">Mg</div>`
     }
 
     configureYscale() {
-        const yskala = this.element.getElementById("lms-chart-yscale")
+        const yscale = this.element.getElementById("yscale")
         for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
             if (i != 0) {
-                yskala.innerHTML += `<div class="yscale absolute" style="right: 0em; top: ${this.config.totalymax-i*this.config.yscale-0.5*this.config.totalheight}cm;">${i.toLocaleString('de-DE')}</div>`
-                yskala.innerHTML += `<div class="yscalehidden">${i.toLocaleString('de-DE')}</div>`
+                yscale.innerHTML += `<div class="yscale absolute" style="right: 0em; top: ${this.config.totalymax-i*this.config.yscale-0.5*this.config.totalheight}cm;">${i.toLocaleString('de-DE')}</div>`
+                yscale.innerHTML += `<div class="yscalehidden">${i.toLocaleString('de-DE')}</div>`
             }
         }
     }
 
     positionLegend() {
-        const legend = this.element.getElementById("lms-chart-legend")
+        const legend = this.element.getElementById("legend")
         legend.style.setProperty('--xpad', this.config.xlegendpadding)
         legend.style.setProperty('--ypad', this.config.ylegendpadding)
         switch (this.config.legendposition) {
@@ -565,7 +565,7 @@ class LmsChartContainer {
     }
 }
 
-class LmsChartConfig {
+class ChartConfig {
     constructor(configobject) {
         Object.assign(this, configobject)
 
@@ -609,11 +609,11 @@ function slotChanged(event, styleelement) {
 }
 
 
-class LmsChart extends HTMLElement {
+class XYGraphs extends HTMLElement {
 
     connectedCallback() {
         try {
-            this.template = lmsChartTemplate.content.cloneNode(true)
+            this.template = xyChartTemplate.content.cloneNode(true)
             this.create();
         }
         catch(err) {
@@ -624,13 +624,13 @@ class LmsChart extends HTMLElement {
                 this.template.getElementById('charterrorname').innerHTML = err.name
                 this.template.getElementById('charterrormessage').innerHTML = err.message
                 this.template.getElementById('charterrorstack').innerHTML = err.stack
-                this.template.getElementById('lms-chart').style.display = 'none'
+                this.template.getElementById('chart').style.display = 'none'
             }
         }
         finally {
-            const schatten = this.attachShadow({mode: "open"})
-            schatten.appendChild(this.template)
-            schatten.addEventListener('slotchange', (event) => slotChanged(event, this.style))
+            const shadow = this.attachShadow({mode: "open"})
+            shadow.appendChild(this.template)
+            shadow.addEventListener('slotchange', (event) => slotChanged(event, this.style))
         }
     }
 
@@ -684,11 +684,11 @@ class LmsChart extends HTMLElement {
             }
         }
 
-        this.config = new LmsChartConfig(this.configobject)
+        this.config = new ChartConfig(this.configobject)
 
         this.setCSSVariables()
-        const lmschartcontainer = new LmsChartContainer(this.config, this.template, (msg) => this.errormessage(msg))
-        lmschartcontainer.appendGraphPaths(this.graphs)
+        const chartcontainer = new ChartContainer(this.config, this.template, (msg) => this.errormessage(msg))
+        chartcontainer.appendGraphPaths(this.graphs)
     }
 
     setCSSVariables() {
@@ -738,4 +738,4 @@ class LmsChart extends HTMLElement {
     }
 }
 
-customElements.define('lms-chart', LmsChart);
+customElements.define('xy-graphs', XYGraphs);
