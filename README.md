@@ -85,7 +85,7 @@ xy-graphs stellt sieben Slots zur Verf√ºgung, die in der folgenden Tabelle erkl√
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
 
 ### Parts
-Um die internen HTML-Elemente mit CSS zu gestalten sind folgende Parts definiert:
+Um die internen HTML-Elemente mit CSS zu gestalten, sind folgende Parts definiert:
 | Part | Bedeutung |
 | --- | --- |
 | `xscale` | Die Skalierung bzw. Nummern der x-Achse |
