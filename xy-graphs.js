@@ -30,14 +30,13 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
         font-family: 'Courier New', Courier, monospace;
     }
     #legend {
-        --xpad: 2mm;
-        --ypad: 2mm;
-        width: calc(var(--breite) - 2 * var(--xpad));
-        height: calc(var(--hoehe) - 2 * var(--ypad));
-        padding: var(--ypad) var(--xpad);
+        width: fit-content;
         display: flex;
-        justify-content: flex-start;
-        align-items: flex-start;
+        background-color: white;
+        padding: 1mm;
+        border: 0.5pt solid gray;
+        border-radius: 2mm;
+        margin: 2mm;
     }
     #svg {
         grid-area: chart;
@@ -103,7 +102,7 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     .titel, .xlabel, ylabel {
         text-align: center;
     }
-    .legend-frame {
+    .legend {
         background-color: white;
         padding: 1mm;
         border: 0.5pt solid gray;
@@ -176,11 +175,9 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
             </g>
         </svg>
         <div id="legend" part="legend" class="absolute">
-            <div class="legend-frame" part="legendframe">
-                <slot name="legend-before" id="legend-before"></slot>
-                <div id="legend-list"></div>
-                <slot name="legend-after" id="legend-after"></slot>
-            </div>
+            <slot name="legend-before" id="legend-before"></slot>
+            <div id="legend-list"></div>
+            <slot name="legend-after" id="legend-after"></slot>
         </div>
         <div id="standardslot" class="absolute breite"><slot></slot></div>
         <div id="error" class="absolute breite"><slot name="error"></slot></div>
@@ -519,47 +516,51 @@ class ChartContainer {
         legend.style.setProperty('--ypad', this.config.ylegendpadding)
         switch (this.config.legendposition) {
             case 't':
-                legend.style['justify-content'] = 'center'
-                legend.style['align-items'] = 'flex-start'
+                legend.style['margin-left'] = '50%'
+                legend.style['transform'] = 'translate(-50%, 0)'
+                legend.style['top'] = 'var(--ypad)'
                 break
             case 'l':
-                legend.style['justify-content'] = 'flex-start'
-                legend.style['align-items'] = 'center'
+                legend.style['margin-top'] = '50%'
+                legend.style['transform'] = 'translate(0, -50%)'
+                legend.style['left'] = 'var(--xpad)'
                 break
             case 'b':
-                legend.style['justify-content'] = 'center'
-                legend.style['align-items'] = 'flex-end'
+                legend.style['margin-left'] = '50%'
+                legend.style['transform'] = 'translate(-50%, 0)'
+                legend.style['bottom'] = 'var(--ypad)'
                 break
             case 'r':
-                legend.style['justify-content'] = 'flex-end'
-                legend.style['align-items'] = 'center'
+                legend.style['margin-top'] = '50%'
+                legend.style['transform'] = 'translate(0, -50%)'
+                legend.style['right'] = 'var(--xpad)'
                 break
             case 'tl':
             case 'lt':
-                legend.style['justify-content'] = 'flex-start'
-                legend.style['align-items'] = 'flex-start'
+                legend.style['top'] = 'var(--ypad)'
+                legend.style['left'] = 'var(--xpad)'
                 break
             case 'tr':
             case 'rt':
-                legend.style['justify-content'] = 'flex-end'
-                legend.style['align-items'] = 'flex-start'
+                legend.style['top'] = 'var(--ypad)'
+                legend.style['right'] = 'var(--xpad)'
                 break
             case 'lb':
             case 'bl':
-                legend.style['justify-content'] = 'flex-start'
-                legend.style['align-items'] = 'flex-end'
+                legend.style['bottom'] = 'var(--ypad)'
+                legend.style['left'] = 'var(--xpad)'
                 break
             case 'rb':
             case 'br':
-                legend.style['justify-content'] = 'flex-end'
-                legend.style['align-items'] = 'flex-end'
+                legend.style['bottom'] = 'var(--ypad)'
+                legend.style['right'] = 'var(--xpad)'
                 break
             case 'none':
                 legend.style['display'] = 'none'
                 break
             default:
-                legend.style['justify-content'] = 'flex-start'
-                legend.style['align-items'] = 'flex-start'
+                legend.style['top'] = 'var(--ypad)'
+                legend.style['right'] = 'var(--xpad)'
                 break
         }
     }

@@ -84,6 +84,21 @@ xy-graphs stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erkl�
 | `legend‑after` | Text nach der Legende | `<div slot="legend-after">gemessen mit Spezialgerät</div>` |
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
 
+### Parts
+Um die internen HTML-Elemente mit CSS zu gestalten sind folgende Parts definiert:
+| Part | Bedeutung |
+| --- | --- |
+| `xscale` | Die Skalierung bzw. Nummern der x-Achse |
+| `yscale` | Die Skalierung bzw. Nummern der y-Achse |
+| `grid` | Das Hauptgitter |
+| `subgrid` | Das Untergitter |
+| `xaxis` | Die Linie für die x-Achse |
+| `yaxis` | Die Linie für die y-Achse |
+| `legend` | Die Legende insgesamt |
+| `legenditem[id]` | Der Legendeneintrag zum Graphen mit der id [id] |
+| `legendgraph[id]` | Der Graph mit der id [id] |
+
+
 ## Beispiele
 ### Gitter ohne Graph
 ```html
