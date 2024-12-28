@@ -4,6 +4,7 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
         --breite: 15cm;
         --hoehe: 10cm;
         --ylabelbreite: 0px;
+        --legendvisibility: visible;
     }
     #overlaycontainer {
         grid-area: chart;
@@ -36,7 +37,7 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
         padding: 1mm;
         border: 0.5pt solid gray;
         border-radius: 2mm;
-        margin: 2mm;
+        visibility: var(--legendvisibility);
     }
     #svg {
         grid-area: chart;
@@ -55,12 +56,14 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
         margin-right: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
     }
     #xscale {
-        margin: 5px 0px;
         grid-area: xscale;
+        margin: 5px 0px;
+        display: grid;
     }
     #yscale {
         grid-area: yscale;
         margin: 0 0.5em;
+        display: grid;
     }
     .no-scaling-stroke {
         vector-effect: non-scaling-stroke;
@@ -120,16 +123,15 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     .yscalehidden, .xscalehidden {
         visibility: hidden;
     }
-    .xscale {
-        width:100%;
+    .xtick {
+        width: fit-content;
         text-align: center;
-        top: 0;
-        z-index: -10;
+        grid-area: 1/1/2/2;
     }
-    .yscale {
-        line-height: var(--hoehe);
-        vertical-align: middle;
-        z-index: -10;
+    .ytick {
+        height: fit-content;
+        text-align: right;
+        grid-area: 1/1/2/2;
     }
     .symbol {
         vector-effect: non-scaling-stroke;
@@ -190,6 +192,7 @@ class ChartError extends Error {}
 class ChartSvg {
     constructor(config, element) {
         this.config = config
+        this.element = element
         this.legend = element.getElementById("legend")
         this.legendlist = element.getElementById("legend-list")
         this.legendbefore = element.getElementById("legend-before")
@@ -377,35 +380,31 @@ class ChartSvg {
         div.innerHTML += `<div>${info.name ? info.name : (info.expr ? info.expr : info.id)}</div>`
     }
 
-    hasEmptyLegend() {
-        return this.hasEmptyLegendList() && this.hasEmptyLegendSlots()
-    }
-
     hasEmptyLegendList() {
         return this.legendlist.childElementCount == 0
     }
 
-    hasEmptyLegendSlots() {
-        return this.legendbefore.childElementCount == 0 && this.legendafter.childElementCount == 0
-    }
-
-    hideLegend() {
-        this.legend.style.visibility = "hidden"
-    }
-
     drawXaxis() {
+        let y = 0;
+        if (this.config.ymin > 0) {
+            y = -this.config.totalymin
+        }
         const element = this.svg.getElementById("xaxis")
         element.setAttribute("x1", this.config.totalxmin)
-        element.setAttribute("y1", 0)
+        element.setAttribute("y1", y)
         element.setAttribute("x2", this.config.totalxmax-10*this.linewidth)
-        element.setAttribute("y2", 0)
+        element.setAttribute("y2", y)
     }
 
     drawYaxis() {
+        let x = 0;
+        if (this.config.xmin > 0) {
+            x = this.config.totalxmin
+        }
         const element = this.svg.getElementById("yaxis")
-        element.setAttribute("x1", 0)
+        element.setAttribute("x1", x)
         element.setAttribute("y1", -this.config.totalymin)
-        element.setAttribute("x2", 0)
+        element.setAttribute("x2", x)
         element.setAttribute("y2", -this.config.totalymax + 10*this.linewidth)
     }
 
@@ -486,81 +485,81 @@ class ChartContainer {
                     throw err
             }
         }
-        if (this.chartsvg.hasEmptyLegend()) {
-            this.chartsvg.hideLegend()
-        }
     }
 
     configureXscale() {
-        const xscale = this.element.getElementById("xscale")
-        for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
-            if (i != 0)
-                xscale.innerHTML += `<div class="xscale absolute" style="left: ${i*this.config.xscale-0.5*this.config.totalwidth-this.config.totalxmin}cm;">${i.toLocaleString('de-DE')}</div>`
+        const ticks = []
+        for (let tick = this.config.xmin; tick <= this.config.xmax; tick += this.config.xdelta) {
+            ticks.push(tick)
         }
-        xscale.innerHTML += `<div class="xscalehidden">Mg</div>`
+        const xscale = this.element.getElementById("xscale")
+        for (let tick of ticks) {
+            let xpos = `${(tick-this.config.xmin)*this.config.xscale}cm`
+            xscale.innerHTML += `<span class="xtick" style="transform: translate(calc(${xpos} - 50%), 0);">${tick.toLocaleString('de-DE')}</span>`
+        }
     }
 
     configureYscale() {
+        const ticks = []
+        for (let tick = this.config.ymin; tick <= this.config.ymax; tick += this.config.ydelta) {
+            ticks.push(tick)
+        }
         const yscale = this.element.getElementById("yscale")
-        for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
-            if (i != 0) {
-                yscale.innerHTML += `<div class="yscale absolute" style="right: 0em; top: ${this.config.totalymax-i*this.config.yscale-0.5*this.config.totalheight}cm;">${i.toLocaleString('de-DE')}</div>`
-                yscale.innerHTML += `<div class="yscalehidden">${i.toLocaleString('de-DE')}</div>`
-            }
+        for (let tick of ticks.reverse()) {
+            let ypos = `${(this.config.ymax-tick)*this.config.yscale}cm`
+            yscale.innerHTML += `<div class="ytick" style="transform: translate(0, calc(${ypos} - 0.5em));">${tick.toLocaleString('de-DE')}</div>`
         }
     }
 
     positionLegend() {
         const legend = this.element.getElementById("legend")
-        legend.style.setProperty('--xpad', this.config.xlegendpadding)
-        legend.style.setProperty('--ypad', this.config.ylegendpadding)
         switch (this.config.legendposition) {
             case 't':
                 legend.style['margin-left'] = '50%'
                 legend.style['transform'] = 'translate(-50%, 0)'
-                legend.style['top'] = 'var(--ypad)'
+                legend.style['top'] = this.config.ylegendpadding
                 break
             case 'l':
                 legend.style['margin-top'] = '50%'
                 legend.style['transform'] = 'translate(0, -50%)'
-                legend.style['left'] = 'var(--xpad)'
+                legend.style['left'] = this.config.xlegendpadding
                 break
             case 'b':
                 legend.style['margin-left'] = '50%'
                 legend.style['transform'] = 'translate(-50%, 0)'
-                legend.style['bottom'] = 'var(--ypad)'
+                legend.style['bottom'] = this.config.ylegendpadding
                 break
             case 'r':
                 legend.style['margin-top'] = '50%'
                 legend.style['transform'] = 'translate(0, -50%)'
-                legend.style['right'] = 'var(--xpad)'
+                legend.style['right'] = this.config.xlegendpadding
                 break
             case 'tl':
             case 'lt':
-                legend.style['top'] = 'var(--ypad)'
-                legend.style['left'] = 'var(--xpad)'
+                legend.style['top'] = this.config.ylegendpadding
+                legend.style['left'] = this.config.xlegendpadding
                 break
             case 'tr':
             case 'rt':
-                legend.style['top'] = 'var(--ypad)'
-                legend.style['right'] = 'var(--xpad)'
+                legend.style['top'] = this.config.ylegendpadding
+                legend.style['right'] = this.config.xlegendpadding
                 break
             case 'lb':
             case 'bl':
-                legend.style['bottom'] = 'var(--ypad)'
-                legend.style['left'] = 'var(--xpad)'
+                legend.style['bottom'] = this.config.ylegendpadding
+                legend.style['left'] = this.config.xlegendpadding
                 break
             case 'rb':
             case 'br':
-                legend.style['bottom'] = 'var(--ypad)'
-                legend.style['right'] = 'var(--xpad)'
+                legend.style['bottom'] = this.config.ylegendpadding
+                legend.style['right'] = this.config.xlegendpadding
                 break
             case 'none':
                 legend.style['display'] = 'none'
                 break
             default:
-                legend.style['top'] = 'var(--ypad)'
-                legend.style['right'] = 'var(--xpad)'
+                legend.style['top'] = this.config.ylegendpadding
+                legend.style['right'] = this.config.xlegendpadding
                 break
         }
     }
@@ -602,10 +601,19 @@ class ChartConfig {
     }
 }
 
-function slotChanged(event, styleelement) {
+
+function slotChanged(event, element) {
     const tmpele = event.target.attributes["name"]
-    if (!!tmpele && tmpele.value == "ylabel") {
-        styleelement.setProperty('--ylabelbreite', '2em')
+    if (!tmpele)
+        return
+    switch(tmpele.value) {
+        case("ylabel"):
+            element.style.setProperty('--ylabelbreite', '2em')
+            break
+        case("legend-before"):
+        case("legend-after"):
+            element.style.setProperty('--legendvisibility', "visible")
+            break
     }
 }
 
@@ -631,7 +639,7 @@ class XYGraphs extends HTMLElement {
         finally {
             const shadow = this.attachShadow({mode: "open"})
             shadow.appendChild(this.template)
-            shadow.addEventListener('slotchange', (event) => slotChanged(event, this.style))
+            shadow.addEventListener('slotchange', (event) => slotChanged(event, this))
         }
     }
 
@@ -690,6 +698,9 @@ class XYGraphs extends HTMLElement {
         this.setCSSVariables()
         const chartcontainer = new ChartContainer(this.config, this.template, (msg) => this.errormessage(msg))
         chartcontainer.appendGraphPaths(this.graphs)
+        if (chartcontainer.chartsvg.hasEmptyLegendList()) {
+            this.style.setProperty('--legendvisibility', 'collapse')
+        }
     }
 
     setCSSVariables() {
