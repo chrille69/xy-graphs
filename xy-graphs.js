@@ -3,7 +3,6 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     :host {
         --breite: 15cm;
         --hoehe: 10cm;
-        --ylabelbreite: 0px;
         --legendvisibility: visible;
     }
     #overlaycontainer {
@@ -11,12 +10,12 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     }
     #chart {
         display: inline-grid;
-        grid-template-columns: var(--ylabelbreite) auto auto;
+        grid-template-columns: auto auto auto;
         grid-template-areas:
-            ". . title"
+            ".      .      title"
             "ylabel yscale chart"
-            ". . xscale"
-            ". . xlabel";
+            ".      .      xscale"
+            ".      .      xlabel";
     }
     #charterrorname, #charterrormessage, charterrorstack {
         font-family: Courier;
@@ -50,10 +49,9 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     }
     #ylabel {
         grid-area: ylabel;
+        writing-mode: vertical-rl;
         align-self: center;
-        rotate: 270deg;
-        margin-left: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
-        margin-right: calc(0.5*var(--ylabelbreite) - 0.5*var(--hoehe));
+        rotate: 180deg;
     }
     #xscale {
         grid-area: xscale;
@@ -114,11 +112,6 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     .svg {
         border: 1px solid grey;
         overflow: visible;
-    }
-    ::slotted([slot=ylabel]) {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
     .yscalehidden, .xscalehidden {
         visibility: hidden;
@@ -607,9 +600,6 @@ function slotChanged(event, element) {
     if (!tmpele)
         return
     switch(tmpele.value) {
-        case("ylabel"):
-            element.style.setProperty('--ylabelbreite', '2em')
-            break
         case("legend-before"):
         case("legend-after"):
             element.style.setProperty('--legendvisibility', "visible")
