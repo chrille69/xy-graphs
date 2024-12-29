@@ -1,5 +1,5 @@
 var xyChartTemplate = document.createElement('template')
-xyChartTemplate.innerHTML = `<style id="lmschartstyle">
+xyChartTemplate.innerHTML = `<style>
     :host {
         display: block;
         width: fit-content;
