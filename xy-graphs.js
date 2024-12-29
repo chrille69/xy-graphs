@@ -1,17 +1,13 @@
 var xyChartTemplate = document.createElement('template')
 xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     :host {
+        display: block;
+        width: fit-content;
+    }
+    #chart {
         --breite: 15cm;
         --hoehe: 10cm;
         --legendvisibility: visible;
-    }
-    #overlaycontainer {
-        position: relative;
-        grid-area: chart;
-        width: var(--breite);
-        height: var(--hoehe);
-    }
-    #chart {
         display: inline-grid;
         grid-template-columns: auto auto auto;
         grid-template-areas:
@@ -26,6 +22,12 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     #charterrorname {
         background-color: red;
         color: white;
+    }
+    #overlaycontainer {
+        position: relative;
+        grid-area: chart;
+        width: var(--breite);
+        height: var(--hoehe);
     }
     #error {
         position: absolute;
@@ -45,7 +47,6 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     }
     #svg {
         grid-area: chart;
-        border: 1px solid grey;
         overflow: visible;
         position: absolute;
     }
@@ -88,6 +89,7 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
         fill: none;
         stroke: grey;
         stroke-width: 0.9pt;
+        stroke-linecap: square;
     }
     .subgrid {
         stroke-width: 0.3pt;
@@ -592,7 +594,7 @@ function slotChanged(event, element) {
     switch(tmpele.value) {
         case("legend-before"):
         case("legend-after"):
-            element.style.setProperty('--legendvisibility', "visible")
+            element.chartelement.style.setProperty('--legendvisibility', "visible")
             break
     }
 }
@@ -603,7 +605,8 @@ class XYGraphs extends HTMLElement {
     connectedCallback() {
         try {
             this.template = xyChartTemplate.content.cloneNode(true)
-            this.errorhtml = this.template.getElementById('error')
+            this.errorelement = this.template.getElementById('error')
+            this.chartelement = this.template.getElementById('chart')
             this.create();
         }
         catch(err) {
@@ -614,7 +617,7 @@ class XYGraphs extends HTMLElement {
                 this.template.getElementById('charterrorname').innerHTML = err.name
                 this.template.getElementById('charterrormessage').innerHTML = err.message
                 this.template.getElementById('charterrorstack').innerHTML = err.stack
-                this.template.getElementById('chart').style.display = 'none'
+                this.chartelement.style.display = 'none'
             }
         }
         finally {
@@ -688,13 +691,13 @@ class XYGraphs extends HTMLElement {
         const chartcontainer = new ChartContainer(this.config, this.template, (msg) => this.errormessage(msg))
         chartcontainer.appendGraphPaths(this.graphs)
         if (chartcontainer.chartsvg.hasEmptyLegendList()) {
-            this.style.setProperty('--legendvisibility', 'collapse')
+            this.chartelement.style.setProperty('--legendvisibility', 'collapse')
         }
     }
 
     setCSSVariables() {
-        this.style.setProperty('--breite', `${this.config.totalwidth}cm`)
-        this.style.setProperty('--hoehe', `${this.config.totalheight}cm`)
+        this.chartelement.style.setProperty('--breite', `${this.config.totalwidth}cm`)
+        this.chartelement.style.setProperty('--hoehe', `${this.config.totalheight}cm`)
     }
 
     parseGridAttribute(attr) {
@@ -738,7 +741,7 @@ class XYGraphs extends HTMLElement {
     }
 
     errormessage(msg) {
-        this.errorhtml.innerHTML += `<div slot="error">${msg}</div>`
+        this.errorelement.innerHTML += `<div slot="error">${msg}</div>`
     }
 }
 
