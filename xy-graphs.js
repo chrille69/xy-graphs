@@ -135,6 +135,7 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     <div id="yscale" part="yscale"></div>
     <div id="xscale" part="xscale"></div>
     <div id="overlaycontainer">
+        <div style="position: absolute;"><slot name="symbols"></slot></div>
         <svg id="svg">
             <defs>
                 <marker id="fancyarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
@@ -254,7 +255,7 @@ class ChartSvg {
     }
 
     createGraphElement(values, graphinfo) {
-        if (graphinfo.symbol == 'line')
+        if (graphinfo.symbol == 'line' && ! graphinfo.symboluse)
             return this.createPathElement(values, graphinfo)
         else {
             return this.createSymbolGroup(values, graphinfo)
@@ -270,7 +271,7 @@ class ChartSvg {
         for (let i=0; i<values.length; i++) {
             const point = this.tupelToPoint(values[i])
             const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
-            use.setAttribute('href',`#symbol-${graphinfo.symbol}`)
+            use.setAttribute('href', graphinfo.symboluse ? graphinfo.symboluse : `#symbol-${graphinfo.symbol}`)
             use.setAttribute('x', point.x)
             use.setAttribute('y', point.y)
             use.setAttribute('transform-origin', `${point.x} ${point.y}`)
@@ -592,6 +593,13 @@ function slotChanged(event, element) {
     if (!tmpele)
         return
     switch(tmpele.value) {
+        case("symbols"):
+            for(let node of event.target.assignedElements()) {
+                const clone = node.cloneNode(true)
+                clone.style.display = "none"
+                element.shadowRoot.appendChild(clone)
+            }
+            break
         case("legend-before"):
         case("legend-after"):
             element.chartelement.style.setProperty('--legendvisibility', "visible")
@@ -658,7 +666,7 @@ class XYGraphs extends HTMLElement {
             end: null,
             step: null,
             symbol: 'line',
-            symbolsize: 1,
+            symboluse: null,
             nolegend: false,
             name: null
         }
