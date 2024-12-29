@@ -6,7 +6,10 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
         --legendvisibility: visible;
     }
     #overlaycontainer {
+        position: relative;
         grid-area: chart;
+        width: var(--breite);
+        height: var(--hoehe);
     }
     #chart {
         display: inline-grid;
@@ -25,11 +28,13 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
         color: white;
     }
     #error {
+        position: absolute;
         background-color: red;
         color: white;
         font-family: 'Courier New', Courier, monospace;
     }
     #legend {
+        position: absolute;
         width: fit-content;
         display: flex;
         background-color: white;
@@ -40,43 +45,44 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     }
     #svg {
         grid-area: chart;
+        border: 1px solid grey;
+        overflow: visible;
+        position: absolute;
     }
     #title {
         grid-area: title;
+        width: var(--breite);
+        text-align: center;
     }
     #xlabel {
         grid-area: xlabel;
+        width: var(--breite);
+        text-align: center;
     }
     #ylabel {
         grid-area: ylabel;
         writing-mode: vertical-rl;
-        align-self: center;
         rotate: 180deg;
+        height: var(--hoehe);
+        text-align: center;
     }
     #xscale {
         grid-area: xscale;
         margin: 5px 0px;
         display: grid;
+        width: var(--breite);
     }
     #yscale {
         grid-area: yscale;
-        margin: 0 0.5em;
+        margin: 0px 5px;
         display: grid;
+        height: var(--hoehe);
+    }
+    #standardslot {
+        position: absolute;
     }
     .no-scaling-stroke {
         vector-effect: non-scaling-stroke;
-    }
-    .absolute {
-        position: absolute;
-    }
-    .relative {
-        position: relative;
-    }
-    .breite {
-        width: var(--breite);
-    }
-    .hoehe {
-        height:var(--hoehe)
     }
     .grid, .subgrid {
         fill: none;
@@ -100,22 +106,6 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
         stroke: black;
         stroke-width: 1pt;
     }
-    .titel, .xlabel, ylabel {
-        text-align: center;
-    }
-    .legend {
-        background-color: white;
-        padding: 1mm;
-        border: 0.5pt solid gray;
-        border-radius: 2mm;
-    }
-    .svg {
-        border: 1px solid grey;
-        overflow: visible;
-    }
-    .yscalehidden, .xscalehidden {
-        visibility: hidden;
-    }
     .xtick {
         width: fit-content;
         text-align: center;
@@ -137,15 +127,15 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
     <pre id="charterrorstack"></pre>
 </div>
 <div id="chart" class="chart">
-    <div id="title"><slot name="title" class="titel breite"></slot></div>
-    <div id="xlabel"><slot name="xlabel" class="xlabel breite"></slot></div>
-    <div id="ylabel"><slot name="ylabel" class="xlabel"></slot></div>
-    <div id="yscale" part="yscale" class="relative"></div>
-    <div id="xscale" part="xscale" class="relative"></div>
-    <div id="overlaycontainer" class="relative breite hoehe">
-        <svg id="svg" class="svg absolute breite hoehe">
+    <div id="title"><slot name="title"></slot></div>
+    <div id="xlabel"><slot name="xlabel"></slot></div>
+    <div id="ylabel"><slot name="ylabel"></slot></div>
+    <div id="yscale" part="yscale"></div>
+    <div id="xscale" part="xscale"></div>
+    <div id="overlaycontainer">
+        <svg id="svg">
             <defs>
-                <marker id="lmsarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
+                <marker id="fancyarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
                      refX="-10" refY="0" markerWidth="10" markerHeight="4" orient="auto">
                     <path style="stroke: none;" d="M0 0 L -10 2 L -10 -2 z"></path>
                 </marker>
@@ -163,19 +153,19 @@ xyChartTemplate.innerHTML = `<style id="lmschartstyle">
                 <path id="grid" part="grid" class="no-scaling-stroke grid"></path>
                 <path id="subgrid" part="subgrid" class="no-scaling-stroke subgrid"></path>
             </g>
-            <g id="graphs" clip-path ="url(#clipgraph)"></g>
+            <g id="graphs" clip-path="url(#clipgraph)"></g>
             <g id="axis" class="axis">
-                <line id="xaxis" part="xaxis" class="xaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
-                <line id="yaxis" part="yaxis" class="yaxis no-scaling-stroke" marker-end="url(#lmsarrow)"></line>
+                <line id="xaxis" part="xaxis" class="xaxis no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
+                <line id="yaxis" part="yaxis" class="yaxis no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
             </g>
         </svg>
-        <div id="legend" part="legend" class="absolute">
+        <div id="legend" part="legend">
             <slot name="legend-before" id="legend-before"></slot>
             <div id="legend-list"></div>
             <slot name="legend-after" id="legend-after"></slot>
         </div>
-        <div id="standardslot" class="absolute breite"><slot></slot></div>
-        <div id="error" class="absolute breite"><slot name="error"></slot></div>
+        <slot></slot>
+        <div id="error"></div>
     </div>
 </div>`
 
@@ -613,6 +603,7 @@ class XYGraphs extends HTMLElement {
     connectedCallback() {
         try {
             this.template = xyChartTemplate.content.cloneNode(true)
+            this.errorhtml = this.template.getElementById('error')
             this.create();
         }
         catch(err) {
@@ -669,6 +660,14 @@ class XYGraphs extends HTMLElement {
             name: null
         }
         this.graphorder = 0
+        this.symbols = [
+            "square",
+            "circle",
+            "cross",
+            "diamond",
+            "triangle",
+            "line"
+        ]
 
         this.gridkeys = Object.keys(this.configobject)
         this.graphkeys = Object.keys(this.emptygraph)
@@ -729,6 +728,9 @@ class XYGraphs extends HTMLElement {
         if (! this.graphkeys.includes(graphprop))
             throw new ChartError(`${attr.name}: ${graphprop} unbekannt. Erlaubt sind nur ${this.graphkeys.join(', ')}`)
 
+        if (graphprop == 'symbol' && ! this.symbols.includes(attr.value))
+            throw new ChartError(`${attr.name}: ${attr.value} unbekannt. Erlaubt sind nur ${this.symbols.join(', ')}`)
+
         if (!(graphid in this.graphs))
             this.graphs[graphid] = {...this.emptygraph, id: graphid, order: this.graphorder++ }
 
@@ -736,7 +738,7 @@ class XYGraphs extends HTMLElement {
     }
 
     errormessage(msg) {
-        this.innerHTML += `<div slot="error">${msg}</div>`
+        this.errorhtml.innerHTML += `<div slot="error">${msg}</div>`
     }
 }
 

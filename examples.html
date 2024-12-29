@@ -7,7 +7,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.9.0/math.min.js"></script>
     <script src="xy-graphs.js"></script>
     <style>
-        * {
+        body {
             font-size: large;
             font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
         }
@@ -22,7 +22,7 @@
 <body>
     <h1>Hallo</h1>
     <xy-graphs><div slot="legend-before" >Hallo</div>
-        <div style="position: relative; top: 1cm; left: 1cm;">Wo kommt das hin?</div>
+        <div style="position: absolute; top: 1cm; left: 1cm;"><div>Wo kommt das hin?</div></div>
     </xy-graphs>
     <xy-graphs grid-ymax="2" grid-ymin="-2" graph-expr-1="sin(x)" grid-xsize="2" grid-ysize="2"></xy-graphs>
     <xy-graphs id="chartid"
