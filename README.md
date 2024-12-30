@@ -67,8 +67,8 @@ Attribute, die für dieses Template relevant sind, beginnen entweder mit `grid-`
 | `graph‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Sinus | null |
 | `graph‑nolegend‑[id]` | Graph wird nicht in die Legende eingetragen. | true | false |
 | `graph‑symbol‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
+| `graph‑symboluse‑[id]` | Gibt die URL für das use-Element an, die für den Graphen verwendet werden soll. Das Symbol muss in den Slot symbols übergeben werden. | #fancy-diamond | null |
 | `graph‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
-| `graph‑symbolsize‑[id]` | Die Größe der Symbole des Graphen zur ID `id` in cm.  | 0.1 | 0.15 |
 | `graph‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | magenta | blue |
 | `graph‑fillcolor‑[id]` | Die Füllfarbe des Graphen zur ID `id`.  | cyan | null |
 
@@ -82,6 +82,7 @@ xy-graphs stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erkl�
 | `ylabel` | Die Beschriftung der y-Achse. | `<div slot="ylabel">Stromstärke I in A</div>` |
 | `legend‑before` | Text vor der Legende | `<div slot="legend-before">Legende:</div>` |
 | `legend‑after` | Text nach der Legende | `<div slot="legend-after">gemessen mit Spezialgerät</div>` |
+| `symbols` | SVG für Symbole in Zusammenhang mit `graph‑symboluse‑[id]` | `<svg slot="symbols"><defs><path id="fancy-diamond" style="stroke:green; fill: red; stroke-width: 1pt; vector-effect: non-scaling-stroke;" d="m-0.15 0 l0.15 0.15 l0.5 -0.15 l-0.15 -0.15 z"></path></defs></svg>` |
 | `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
 
 ### Parts
