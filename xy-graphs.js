@@ -94,11 +94,6 @@ xyChartTemplate.innerHTML = `<style>
     .subgrid {
         stroke-width: 0.3pt;
     }
-    .graphpath {
-        fill: none;
-        stroke-width: 1.3pt;
-        vector-effect: non-scaling-stroke;
-    }
     .legenditem {
         display: flex;
         align-items: center;
@@ -246,10 +241,6 @@ class ChartSvg {
         for (let element of elements) {
             if (! element)
                 continue
-            
-            element.classList.add('graphpath')
-            element.style['stroke'] = graphinfo.strokecolor
-            element.style['stroke-width'] = '1.3pt'
             this.graphgroup.appendChild(element)
         }
     }
@@ -278,6 +269,10 @@ class ChartSvg {
             use.setAttribute('part', `graph${graphinfo.id}`)
             group.appendChild(use)
         }
+        group.style['stroke'] = graphinfo.strokecolor
+        group.style['stroke-width'] = '1.3pt'
+        group.style['fill'] = "none"
+        group.style['vector-effect'] = "non-scaling-stroke"
 
         return group
     }
@@ -296,6 +291,10 @@ class ChartSvg {
         }
         path.setAttribute("d", dpath)
         path.setAttribute('part', `graph${graphinfo.id}`)
+        path.style['stroke'] = graphinfo.strokecolor
+        path.style['stroke-width'] = '1.3pt'
+        path.style['fill'] = "none"
+        path.style['vector-effect'] = "non-scaling-stroke"
         return path
     }
 
