@@ -355,13 +355,10 @@ class ChartSvg {
         const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         symbolsvg.setAttribute('width', '0.5cm')
         symbolsvg.setAttribute('height', '0.5cm')
-        symbolsvg.setAttribute('viewBox', `-0.225 -0.1875 0.45 .375`)
+        symbolsvg.setAttribute('viewBox', `-0.25 -0.25 .5 .5`)
         div.appendChild(symbolsvg)
-        const element = this.createSymbolGroup([[0,0]], info, true)
+        const element = this.createSymbolGroup([[0,0]], info)
         symbolsvg.appendChild(element)
-        element.classList.add('graphpath')
-        element.style['stroke'] = info.strokecolor
-        element.style['stroke-width'] = '1.3pt'
         div.innerHTML += `<div>${info.name ? info.name : (info.expr ? info.expr : info.id)}</div>`
     }
 
