@@ -40,64 +40,69 @@ Attribute, die für dieses Template relevant sind, beginnen entweder mit `grid-`
 #### Attribute für das Gitter
  `grid`-Attribute konfigurieren das Koordinatengitter, die Größe des Diagramms und die Skalierung der Achsen.
  
-| Attribut | Funktion | Beispiel | Standard |
-| --- | --- | --- | --- |
-| `grid‑xmin`<br/>`grid‑ymin` | Untere Intervallgrenze der x- bzw. y-Werte |  -4 | 0 |
-| `grid‑xmax`<br/>`grid‑ymax` | Obere Intervallgrenze der x- bzw. y-Werte |  8 | 10 |
-| `grid‑xsize`<br/>`grid‑ysize` | Größe des Hauptkästchens in cm |  2 | 1 |
-| `grid‑xdelta`<br/>`grid‑ydelta` | Größe des Hauptgitters in x- bzw. y-Werten |  5 | 1 |
-| `grid‑xsubdelta`<br/>`grid‑ysubdelta` | Größe des Untergitters in x- bzw. y-Werten |  0.1 | .2 |
-| `grid‑xhidegrid`<br/>`grid‑yhidegrid` | Hauptgitter verbergen |  true | false |
-| `grid‑xhidesubgrid`<br/>`grid‑yhidesubgrid` | Untergitter verbergen |  true | false |
-| `grid‑xhidescale`<br/>`grid‑yhidescale` | Skalierung verbergen |  true | false |
-| `grid‑legendposition` | Platzierung der Legende im Diagramm (t, r, b, l, tr, tl, br, bl, none) | tr | tl |
-| `grid‑xlegendpadding`<br/>`grid‑ylegendpadding` | Padding in CSS-Koordinaten | 5mm | 2mm |
+| Attribut                                        | Funktion                                   | Beispiel | Standard |
+| ---                                             | ---                                        | ---      | ---      |
+| `grid‑xmin`<br/>`grid‑ymin`                     | Untere Intervallgrenze der x- bzw. y-Werte |       -4 |        0 |
+| `grid‑xmax`<br/>`grid‑ymax`                     | Obere Intervallgrenze der x- bzw. y-Werte  |        8 |       10 |
+| `grid‑xsize`<br/>`grid‑ysize`                   | Größe des Hauptkästchens in cm             |        2 |        1 |
+| `grid‑xdelta`<br/>`grid‑ydelta`                 | Größe des Hauptgitters in x- bzw. y-Werten |        5 |        1 |
+| `grid‑xsubdelta`<br/>`grid‑ysubdelta`           | Größe des Untergitters in x- bzw. y-Werten |      0.1 |       .2 |
+| `grid‑xhidegrid`<br/>`grid‑yhidegrid`           | Hauptgitter verbergen                      |     true |    false |
+| `grid‑xhidesubgrid`<br/>`grid‑yhidesubgrid`     | Untergitter verbergen                      |     true |    false |
+| `grid‑xhidescale`<br/>`grid‑yhidescale`         | Skalierung verbergen                       |     true |    false |
+| `grid‑legendposition`                           | Platzierung der Legende im Diagramm (t, r, b, l, tr, tl, br, bl, none) | tr | tl |
+| `grid‑xlegendpadding`<br/>`grid‑ylegendpadding` | Padding in CSS-Koordinaten                 |      5mm |      2mm |
 
 #### Attribute für Graphen
  Mit Hilfe der `graph`-Attribute können Messwertepaare oder Funktionsgraphen dargestellt werden. Es muss entweder
  das Attribut `graph-values-[id]` oder `graph-expr-[id]` gesetzt werden, damit ein Graph zu sehen ist.
 
-| Attribut | Funktion | Beispiel | Standard |
-| --- | --- | --- | --- |
-| `graph‑values‑[id]` | Wertepaare in x,y-Koordinaten für Graph der ID `id` als zweidimensionales JSON-Array. | [[0,0],[1,4],[2,6],[3,9]] | null |
-| `graph‑expr‑[id]` | Mathematischer Ausdruck, der von math.js evaluiert werden kann. Muss x als Variable enthalten. | 2*sin(x) | null |
-| `graph‑start‑[id]` | x-Startwert des Graphen mit der ID `id`. | -4 | grid-xmin |
-| `graph‑end‑[id]` | x-Endwert des Graphen mit der ID `id`. | 20 | grid-xmax |
-| `graph‑step‑[id]` | Schrittweite der x-Werte zum Graphen mit der ID `id`. | 0.02 | grid-xsubdelta |
-| `graph‑name‑[id]` | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Sinus | null |
-| `graph‑nolegend‑[id]` | Graph wird nicht in die Legende eingetragen. | true | false |
-| `graph‑symbol‑[id]` | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle).  | diamond | line |
-| `graph‑symboluse‑[id]` | Gibt die URL für das use-Element an, die für den Graphen verwendet werden soll. Das Symbol muss in den Slot symbols übergeben werden. | #fancy-diamond | null |
-| `graph‑linewidth‑[id]` | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
+| Attribut                 | Funktion | Beispiel | Standard |
+| ---                      | --- | --- | --- |
+| `graph‑values‑[id]`      | Wertepaare in x,y-Koordinaten für Graph der ID `id` als zweidimensionales JSON-Array. | [[0,0],[1,4],[2,6],[3,9]] | null |
+| `graph‑expr‑[id]`        | Mathematischer Ausdruck, der von math.js evaluiert werden kann. Muss x als Variable enthalten. | 2*sin(x) | null |
+| `graph‑start‑[id]`       | x-Startwert des Graphen mit der ID `id`. | -4 | grid-xmin |
+| `graph‑end‑[id]`         | x-Endwert des Graphen mit der ID `id`. | 20 | grid-xmax |
+| `graph‑step‑[id]`        | Schrittweite der x-Werte zum Graphen mit der ID `id`. | 0.02 | grid-xsubdelta |
+| `graph‑name‑[id]`        | Der Name, der in der Legende für den Graphen mit der ID `id` angezeigt wird. Fehlt diese Angabe wird der Wert von `id` in der Legende angezeigt. | Sinus | null |
+| `graph‑nolegend‑[id]`    | Graph wird nicht in die Legende eingetragen. | true | false |
+| `graph‑symbol‑[id]`      | Gibt an, wie der Graph zur ID `id` dargestellt werden soll (line, circle, cross, square, diamond, triangle, custompath).  | diamond | line |
+| `graph‑linewidth‑[id]`   | Die Liniendicke des Graphen zur ID `id` in CSS-Einheiten.  | 2pt | 1.3pt |
 | `graph‑strokecolor‑[id]` | Die Linienfarbe des Graphen zur ID `id`.  | magenta | blue |
-| `graph‑fillcolor‑[id]` | Die Füllfarbe des Graphen zur ID `id`.  | cyan | null |
+| `graph‑fillcolor‑[id]`   | Die Füllfarbe des Graphen zur ID `id`.  | cyan | null |
 
 ### Slots
-xy-graphs stellt sieben Slots zur Verfügung, die in der folgenden Tabelle erklärt sind.
-| Slot | Funktion | Beispiel |
-| --- | --- | --- |
-| standardslot | Wird direkt auf dem Diagramm dargestellt | |
-| `title` | Die Überschrift des Diagramms. | `<div slot="title">Röntgenspektrum</div>` |
-| `xlabel` | Die Beschriftung der x-Achse. | `<div slot="xlabel">Spannung U in V</div>` |
-| `ylabel` | Die Beschriftung der y-Achse. | `<div slot="ylabel">Stromstärke I in A</div>` |
-| `legend‑before` | Text vor der Legende | `<div slot="legend-before">Legende:</div>` |
-| `legend‑after` | Text nach der Legende | `<div slot="legend-after">gemessen mit Spezialgerät</div>` |
-| `symbols` | SVG für Symbole in Zusammenhang mit `graph‑symboluse‑[id]` | `<svg slot="symbols"><defs><path id="fancy-diamond" style="stroke:green; fill: red; stroke-width: 1pt; vector-effect: non-scaling-stroke;" d="m-0.15 0 l0.15 0.15 l0.5 -0.15 l-0.15 -0.15 z"></path></defs></svg>` |
-| `error` | Formatiert die Fehlermeldung. Nur zum internen Gebrauch gedacht. | |
+xy-graphs stellt sechs Slots zur Verfügung, die in der folgenden Tabelle erklärt sind.
+| Slot            | Funktion                                 | Beispiel                                                   |
+| ---             | ---                                      | ---                                                        |
+| standardslot    | Wird direkt auf dem Diagramm dargestellt |                                                            |
+| `title`         | Die Überschrift des Diagramms.           | `<div slot="title">Röntgenspektrum</div>`                  |
+| `xlabel`        | Die Beschriftung der x-Achse.            | `<div slot="xlabel">Spannung U in V</div>`                 |
+| `ylabel`        | Die Beschriftung der y-Achse.            | `<div slot="ylabel">Stromstärke I in A</div>`              |
+| `legend‑before` | Text vor der Legende                     | `<div slot="legend-before">Legende:</div>`                 |
+| `legend‑after`  | Text nach der Legende                    | `<div slot="legend-after">gemessen mit Spezialgerät</div>` |
 
 ### Parts
 Um die internen HTML-Elemente mit CSS zu gestalten, sind folgende Parts definiert:
-| Part | Bedeutung |
-| --- | --- |
-| `xscale` | Die Skalierung bzw. Nummern der x-Achse |
-| `yscale` | Die Skalierung bzw. Nummern der y-Achse |
-| `grid` | Das Hauptgitter |
-| `subgrid` | Das Untergitter |
-| `xaxis` | Die Linie für die x-Achse |
-| `yaxis` | Die Linie für die y-Achse |
-| `legend` | Die Legende insgesamt |
+| Part             | Bedeutung                                       |
+| ---              | ---                                             |
+| `graph[id]`      | Der Graph mit der id [id]                       |
 | `legenditem[id]` | Der Legendeneintrag zum Graphen mit der id [id] |
-| `legendgraph[id]` | Der Graph mit der id [id] |
+| `legend`         | Die Legende insgesamt                           |
+| `xscale`         | Die Skalierung bzw. Nummern der x-Achse         |
+| `yscale`         | Die Skalierung bzw. Nummern der y-Achse         |
+| `grid`           | Das Hauptgitter                                 |
+| `subgrid`        | Das Untergitter                                 |
+| `xaxis`          | Die Linie für die x-Achse                       |
+| `yaxis`          | Die Linie für die y-Achse                       |
+
+### CSS-Variablen
+Es gibt zwei wichtige CSS-Variablen, die zum Einsatz kommen, wenn `graph-symbol-[id]` auf `custompath` gesetzt wird. Diese
+Variablen müssen im zum Graphen gehörenden `::part(symbol[id])` definiert werden.
+| Variable      | Funktion                                    | Beispiel                                    |
+| ---           | ---                                         | ---                                         |
+| `--path`      | Pfadangabe des SVG path-Elements.           | `path("m -.1 -.2 l.2 0 l -.2 .4 l .2 0 z")` |
+| `--transform` | Angabe der Transformation des path-Elements | `rotate(45deg)`                             |
 
 
 ## Beispiele

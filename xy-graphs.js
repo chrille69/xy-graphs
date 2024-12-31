@@ -8,6 +8,7 @@ xyChartTemplate.innerHTML = `<style>
         --breite: 15cm;
         --hoehe: 10cm;
         --legendvisibility: visible;
+        --path: path('m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3');
         display: inline-grid;
         grid-template-columns: auto auto auto;
         grid-template-areas:
@@ -82,6 +83,10 @@ xyChartTemplate.innerHTML = `<style>
     #standardslot {
         position: absolute;
     }
+    #symbol-custompath {
+        d: var(--path);
+        transform: var(--transform);
+    }
     .no-scaling-stroke {
         vector-effect: non-scaling-stroke;
     }
@@ -116,6 +121,7 @@ xyChartTemplate.innerHTML = `<style>
     .symbol {
         vector-effect: non-scaling-stroke;
         transform-origin: center;
+        transform-box: fill-box;
     }
 </style>
 <div>
@@ -130,7 +136,6 @@ xyChartTemplate.innerHTML = `<style>
     <div id="yscale" part="yscale"></div>
     <div id="xscale" part="xscale"></div>
     <div id="overlaycontainer">
-        <div style="position: absolute;"><slot name="symbols"></slot></div>
         <svg id="svg">
             <defs>
                 <marker id="fancyarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
@@ -146,6 +151,7 @@ xyChartTemplate.innerHTML = `<style>
                 <path class="symbol" id="symbol-diamond" d="m-0.15 0 l0.15 0.15 l0.15 -0.15 l-0.15 -0.15 z" />
                 <path class="symbol" id="symbol-triangle" d="m0 -0.1125 l0.12990381 0.225 l-0.259807621 0 z" />
                 <path class="symbol" id="symbol-line" d="m-0.15 0 l0.3 0" />
+                <path class="symbol" id="symbol-custompath" />
             </defs>
             <g id="grids" class="grids">
                 <path id="grid" part="grid" class="no-scaling-stroke grid"></path>
@@ -246,7 +252,7 @@ class ChartSvg {
     }
 
     createGraphElement(values, graphinfo) {
-        if (graphinfo.symbol == 'line' && ! graphinfo.symboluse)
+        if (graphinfo.symbol == 'line')
             return this.createPathElement(values, graphinfo)
         else {
             return this.createSymbolGroup(values, graphinfo)
@@ -262,17 +268,15 @@ class ChartSvg {
         for (let i=0; i<values.length; i++) {
             const point = this.tupelToPoint(values[i])
             const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
-            use.setAttribute('href', graphinfo.symboluse ? graphinfo.symboluse : `#symbol-${graphinfo.symbol}`)
+            use.setAttribute('href', `#symbol-${graphinfo.symbol}`)
             use.setAttribute('x', point.x)
             use.setAttribute('y', point.y)
-            use.setAttribute('transform-origin', `${point.x} ${point.y}`)
             use.setAttribute('part', `graph${graphinfo.id}`)
             group.appendChild(use)
         }
         group.style['stroke'] = graphinfo.strokecolor
         group.style['stroke-width'] = '1.3pt'
         group.style['fill'] = "none"
-        group.style['vector-effect'] = "non-scaling-stroke"
 
         return group
     }
@@ -589,13 +593,6 @@ function slotChanged(event, element) {
     if (!tmpele)
         return
     switch(tmpele.value) {
-        case("symbols"):
-            for(let node of event.target.assignedElements()) {
-                const clone = node.cloneNode(true)
-                clone.style.display = "none"
-                element.shadowRoot.appendChild(clone)
-            }
-            break
         case("legend-before"):
         case("legend-after"):
             element.chartelement.style.setProperty('--legendvisibility', "visible")
@@ -662,7 +659,6 @@ class XYGraphs extends HTMLElement {
             end: null,
             step: null,
             symbol: 'line',
-            symboluse: null,
             nolegend: false,
             name: null
         }
@@ -673,7 +669,8 @@ class XYGraphs extends HTMLElement {
             "cross",
             "diamond",
             "triangle",
-            "line"
+            "line",
+            "custompath"
         ]
 
         this.gridkeys = Object.keys(this.configobject)
