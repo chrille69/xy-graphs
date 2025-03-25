@@ -87,11 +87,12 @@ xyChartTemplate.innerHTML = `<style>
         text-align: right;
         width: calc(var(--breite) - .5em);
         top: min(var(--xaxispos), var(--hoehe));
+        margin: 5px 0;
     }
     #yscalelabel{
         position: absolute;
         text-align: right;
-        right: calc( min(var(--breite) - var(--yaxispos), var(--breite)) + .5em);
+        right: calc( min(var(--breite) - var(--yaxispos), var(--breite)) + 5px);
     }
     #standardslot {
         position: absolute;
@@ -182,8 +183,8 @@ xyChartTemplate.innerHTML = `<style>
             <slot name="legend-after" id="legend-after"></slot>
         </div>
         <slot></slot>
-        <div id="yscalelabel"><slot name="yscalelabel"></slot></div>
-        <div id="xscalelabel"><slot name="xscalelabel"></slot></div>
+        <div id="yscalelabel"><slot name="yscalelabel">x</slot></div>
+        <div id="xscalelabel"><slot name="xscalelabel">y</slot></div>
         <div id="error"></div>
     </div>
 </div>`
