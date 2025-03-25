@@ -7,6 +7,8 @@ xyChartTemplate.innerHTML = `<style>
     #chart {
         --breite: 15cm;
         --hoehe: 10cm;
+        --yaxispos: 0cm;
+        --xaxispos: 0cm;
         --legendvisibility: visible;
         --path: path('m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3');
         display: inline-grid;
@@ -79,6 +81,17 @@ xyChartTemplate.innerHTML = `<style>
         margin: 0px 5px;
         display: grid;
         height: var(--hoehe);
+    }
+    #xscalelabel{
+        position: absolute;
+        text-align: right;
+        width: calc(var(--breite) - .5em);
+        top: min(var(--xaxispos), var(--hoehe));
+    }
+    #yscalelabel{
+        position: absolute;
+        text-align: right;
+        right: calc( min(var(--breite) - var(--yaxispos), var(--breite)) + .5em);
     }
     #standardslot {
         position: absolute;
@@ -169,6 +182,8 @@ xyChartTemplate.innerHTML = `<style>
             <slot name="legend-after" id="legend-after"></slot>
         </div>
         <slot></slot>
+        <div id="yscalelabel"><slot name="yscalelabel"></slot></div>
+        <div id="xscalelabel"><slot name="xscalelabel"></slot></div>
         <div id="error"></div>
     </div>
 </div>`
@@ -475,25 +490,27 @@ class ChartContainer {
 
     configureXscale() {
         const ticks = []
-        for (let tick = this.config.xmin; tick <= this.config.xmax; tick += this.config.xdelta) {
+        for (let tick = this.config.xmin; tick < this.config.xmax; tick += this.config.xdelta) {
+            if (tick == 0) continue
             ticks.push(tick)
         }
         const xscale = this.element.getElementById("xscale")
         for (let tick of ticks) {
-            let xpos = `${(tick-this.config.xmin)*this.config.xscale}cm`
-            xscale.innerHTML += `<span class="xtick" style="transform: translate(calc(${xpos} - 50%), 0);">${tick.toLocaleString('de-DE')}</span>`
+            let xpos = (tick-this.config.xmin)*this.config.xscale
+            xscale.innerHTML += `<span class="xtick" style="transform: translate(calc(${xpos}cm - 50%), 0);">${tick.toLocaleString('de-DE')}</span>`
         }
     }
 
     configureYscale() {
         const ticks = []
-        for (let tick = this.config.ymin; tick <= this.config.ymax; tick += this.config.ydelta) {
+        for (let tick = this.config.ymin; tick < this.config.ymax; tick += this.config.ydelta) {
+            if (tick == 0) continue
             ticks.push(tick)
         }
         const yscale = this.element.getElementById("yscale")
         for (let tick of ticks.reverse()) {
-            let ypos = `${(this.config.ymax-tick)*this.config.yscale}cm`
-            yscale.innerHTML += `<div class="ytick" style="transform: translate(0, calc(${ypos} - 0.5em));">${tick.toLocaleString('de-DE')}</div>`
+            let ypos = (this.config.ymax-tick)*this.config.yscale
+            yscale.innerHTML += `<div class="ytick" style="transform: translate(0, calc(${ypos}cm - 0.5em));">${tick.toLocaleString('de-DE')}</div>`
         }
     }
 
@@ -699,6 +716,8 @@ class XYGraphs extends HTMLElement {
     setCSSVariables() {
         this.chartelement.style.setProperty('--breite', `${this.config.totalwidth}cm`)
         this.chartelement.style.setProperty('--hoehe', `${this.config.totalheight}cm`)
+        this.chartelement.style.setProperty('--xaxispos', `${this.config.ymax*this.config.yscale}cm`)
+        this.chartelement.style.setProperty('--yaxispos', `${-this.config.xmin*this.config.xscale}cm`)
     }
 
     parseGridAttribute(attr) {
