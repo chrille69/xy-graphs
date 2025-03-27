@@ -5,19 +5,22 @@ xyChartTemplate.innerHTML = `<style>
         width: fit-content;
     }
     #chart {
-        --breite: 15cm;
-        --hoehe: 10cm;
-        --yaxispos: 0cm;
-        --xaxispos: 0cm;
+        --breite: 15;
+        --hoehe: 10;
+        --yaxispos: 0;
+        --xaxispos: 0;
+        --pt: 0.0352777778px;
+        --ticklinelengthin: .2;
+        --ticklinelengthout: .2;
+        --tickgaplinenumber: .1;
         --legendvisibility: visible;
         --path: path('m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3');
         display: inline-grid;
         grid-template-columns: auto auto auto;
         grid-template-areas:
-            ".      .      title"
-            "ylabel yscale chart"
-            ".      .      xscale"
-            ".      .      xlabel";
+            ".      title"
+            "ylabel chart"
+            ".      xlabel";
     }
     #charterrorname, #charterrormessage, charterrorstack {
         font-family: Courier;
@@ -29,8 +32,8 @@ xyChartTemplate.innerHTML = `<style>
     #overlaycontainer {
         position: relative;
         grid-area: chart;
-        width: var(--breite);
-        height: var(--hoehe);
+        width: calc(var(--breite) * 1cm);
+        height: calc(var(--hoehe) * 1cm);
     }
     #error {
         position: absolute;
@@ -55,51 +58,55 @@ xyChartTemplate.innerHTML = `<style>
     }
     #title {
         grid-area: title;
-        width: var(--breite);
+        width: var(--breite)cm;
         text-align: center;
     }
     #xlabel {
         grid-area: xlabel;
-        width: var(--breite);
+        width: var(--breite)cm;
         text-align: center;
     }
     #ylabel {
         grid-area: ylabel;
         writing-mode: vertical-rl;
         rotate: 180deg;
-        height: var(--hoehe);
+        height: calc(var(--hoehe) * 1cm);
         text-align: center;
     }
-    #xscale {
-        grid-area: xscale;
-        margin: 5px 0px;
-        display: grid;
-        width: var(--breite);
-    }
-    #yscale {
-        grid-area: yscale;
-        margin: 0px 5px;
-        display: grid;
-        height: var(--hoehe);
-    }
-    #xscalelabel{
+    #xaxislabel {
         position: absolute;
         text-align: right;
-        width: calc(var(--breite) - .5em);
-        top: min(var(--xaxispos), var(--hoehe));
-        margin: 5px 0;
+        line-height: 1;
+        width: calc(var(--breite) * 1cm);
+        top: calc(min(var(--xaxispos) * 1cm, var(--hoehe) * 1cm) + var(--ticklinelengthout) * 1cm + var(--tickgaplinenumber) * 1cm );
     }
-    #yscalelabel{
+    #yaxislabel {
         position: absolute;
         text-align: right;
-        right: calc( min(var(--breite) - var(--yaxispos), var(--breite)) + 5px);
+        right: calc( min(var(--breite)* 1cm - var(--yaxispos) * 1cm, var(--breite) * 1cm) + var(--ticklinelengthout) * 1cm + var(--tickgaplinenumber) * 1cm);
     }
     #standardslot {
         position: absolute;
     }
+    #xaxisline, #yaxisline {
+        fill: none;
+        stroke: black;
+        stroke-width: 1pt;
+    }
+    #xnumbers {
+        font-size: calc(12 * var(--pt));
+        text-anchor: middle;
+        dominant-baseline: text-before-edge;
+        transform: translate(0, calc(var(--ticklinelengthout) * 1px + var(--tickgaplinenumber) * 1px));
+    }
+    #ynumbers {
+        font-size: calc(12 * var(--pt));
+        text-anchor: end;
+        dominant-baseline: central;
+        transform: translate(calc(var(--tickgaplinenumber) * -1px), 0);
+    }
     #symbol-custompath {
         d: var(--path);
-        transform: var(--transform);
     }
     .no-scaling-stroke {
         vector-effect: non-scaling-stroke;
@@ -117,20 +124,9 @@ xyChartTemplate.innerHTML = `<style>
         display: flex;
         align-items: center;
     }
-    .xaxis, .yaxis {
-        fill: none;
-        stroke: black;
+    .ticklines {
         stroke-width: 1pt;
-    }
-    .xtick {
-        width: fit-content;
-        text-align: center;
-        grid-area: 1/1/2/2;
-    }
-    .ytick {
-        height: fit-content;
-        text-align: right;
-        grid-area: 1/1/2/2;
+        stroke: black;
     }
     .symbol {
         vector-effect: non-scaling-stroke;
@@ -147,8 +143,6 @@ xyChartTemplate.innerHTML = `<style>
     <div id="title"><slot name="title"></slot></div>
     <div id="xlabel"><slot name="xlabel"></slot></div>
     <div id="ylabel"><slot name="ylabel"></slot></div>
-    <div id="yscale" part="yscale"></div>
-    <div id="xscale" part="xscale"></div>
     <div id="overlaycontainer">
         <svg id="svg">
             <defs>
@@ -172,9 +166,15 @@ xyChartTemplate.innerHTML = `<style>
                 <path id="subgrid" part="subgrid" class="no-scaling-stroke subgrid"></path>
             </g>
             <g id="graphs" clip-path="url(#clipgraph)"></g>
-            <g id="axis" class="axis">
-                <line id="xaxis" part="xaxis" class="xaxis no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
-                <line id="yaxis" part="yaxis" class="yaxis no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
+            <g id="xaxis" class="xaxis">
+                <line id="xaxisline" part="xaxisline" class="no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
+                <path id="xticklines" part="xticklines" class="ticklines no-scaling-stroke" />
+                <g id="xnumbers" class="xnumbers"/>
+            </g>
+            <g id="yaxis" class="yaxis">
+                <line id="yaxisline" part="yaxisline" class="no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
+                <path id="yticklines" part="yticklines" class="ticklines no-scaling-stroke" />
+                <g id="ynumbers" class="ynumbers" />
             </g>
         </svg>
         <div id="legend" part="legend">
@@ -183,8 +183,8 @@ xyChartTemplate.innerHTML = `<style>
             <slot name="legend-after" id="legend-after"></slot>
         </div>
         <slot></slot>
-        <div id="yscalelabel"><slot name="yscalelabel">x</slot></div>
-        <div id="xscalelabel"><slot name="xscalelabel">y</slot></div>
+        <div id="xaxislabel"><slot name="xaxislabel">x</slot></div>
+        <div id="yaxislabel"><slot name="yaxislabel">y</slot></div>
         <div id="error"></div>
     </div>
 </div>`
@@ -213,10 +213,11 @@ class ChartSvg {
         this.drawSubgrid()
         this.drawGrid()
 
-        if (! this.config.xhideaxis)
-            this.drawXaxis()
-        if (! this.config.yhideaxis)
-            this.drawYaxis()
+        this.drawXaxis()
+        this.drawYaxis()
+
+        this.drawXTicks()
+        this.drawYTicks()
 
         this.cos30 = 0.8660254037844387
         this.sin30 = 0.5
@@ -391,11 +392,13 @@ class ChartSvg {
         if (this.config.ymin > 0) {
             y = -this.config.totalymin
         }
-        const element = this.svg.getElementById("xaxis")
+        const element = this.svg.getElementById("xaxisline")
         element.setAttribute("x1", this.config.totalxmin)
         element.setAttribute("y1", y)
         element.setAttribute("x2", this.config.totalxmax-10*this.linewidth)
         element.setAttribute("y2", y)
+        if (this.config.xhideaxis)
+            element.style.display = 'none'
     }
 
     drawYaxis() {
@@ -403,11 +406,70 @@ class ChartSvg {
         if (this.config.xmin > 0) {
             x = this.config.totalxmin
         }
-        const element = this.svg.getElementById("yaxis")
+        const element = this.svg.getElementById("yaxisline")
         element.setAttribute("x1", x)
         element.setAttribute("y1", -this.config.totalymin)
         element.setAttribute("x2", x)
         element.setAttribute("y2", -this.config.totalymax + 10*this.linewidth)
+        if (this.config.yhideaxis)
+            element.style.display = 'none'
+    }
+
+    drawXTicks() {
+        const numbergroup = this.svg.getElementById("xnumbers")
+        const container = this.element.getElementById("overlaycontainer")
+        const observer = new ResizeObserver(this.setSpaceBottom.bind(this, numbergroup, container))
+        observer.observe(numbergroup)
+        let path=""
+        for (let i = this.config.xmin; i < this.config.xmax; i += this.config.xdelta) {
+            if (i == 0) continue
+            let pos = i*this.config.xscale
+            path += `M${pos}, ${this.config.ticklinelengthout} L${pos}, -${this.config.ticklinelengthin}`
+            this.addNumber(numbergroup, i, pos, 0)
+        }
+        if (this.config.ticklinelengthout != 0 || this.config.ticklinelengthin != 0) {
+            const element = this.svg.getElementById("xticklines")
+            element.setAttribute("d", path)
+        }
+        if (this.config.xhideticknumbers) 
+            numbergroup.style.display = "none"
+    }
+
+    drawYTicks() {
+        const numbergroup = this.svg.getElementById("ynumbers")
+        const container = this.element.getElementById("overlaycontainer")
+        const observer = new ResizeObserver(this.setSpaceLeft.bind(this, numbergroup, container, this.element.getElementById("yaxislabel")))
+        observer.observe(numbergroup)
+        let path = ""
+        for (let i = this.config.ymin; i < this.config.ymax; i += this.config.ydelta) {
+            if (i == 0) continue
+            let pos = -i*this.config.yscale
+            path += `M-${this.config.ticklinelengthout},${pos} L${this.config.ticklinelengthin},${pos}`
+            this.addNumber(numbergroup, i, -this.config.ticklinelengthout, pos)
+        }
+        if (this.config.ticklinelengthout != 0 || this.config.ticklinelengthin != 0) {
+            const element = this.svg.getElementById("yticklines")
+            element.setAttribute("d", path)
+        }
+        if (this.config.yhideticknumbers) 
+            numbergroup.style.display = "none"
+    }
+
+    addNumber(element, number, x, y) {
+        element.innerHTML += `<text x="${x}" y="${y}" >${number}</text>`
+    }
+
+    setSpaceBottom(numbergroup, container) {
+        let rect = numbergroup.getBoundingClientRect()
+        let svgrect = this.svg.getBoundingClientRect()
+        container.style['margin-bottom'] = `max(${rect.bottom-svgrect.bottom}px, 0px)`
+    }
+
+    setSpaceLeft(numbergroup, container, label) {
+        let rect = numbergroup.getBoundingClientRect()
+        let svgrect = this.svg.getBoundingClientRect()
+        let labelrect = label.getBoundingClientRect()
+        container.style['margin-left'] = `max(${svgrect.left-rect.left}px, ${svgrect.left-labelrect.left}px, 0px)`
     }
 
     drawGrid() {
@@ -463,12 +525,6 @@ class ChartContainer {
         this.colorlist = ['blue','red','green','magenta','cyan','purple','orange']
 
         this.chartsvg = new ChartSvg(this.config, this.element)
-
-        if (! this.config.xhidescale)
-            this.configureXscale()
-        if (! this.config.yhidescale)
-            this.configureYscale()
-
         this.positionLegend()
     }
 
@@ -486,32 +542,6 @@ class ChartContainer {
                 else
                     throw err
             }
-        }
-    }
-
-    configureXscale() {
-        const ticks = []
-        for (let tick = this.config.xmin; tick < this.config.xmax; tick += this.config.xdelta) {
-            if (tick == 0) continue
-            ticks.push(tick)
-        }
-        const xscale = this.element.getElementById("xscale")
-        for (let tick of ticks) {
-            let xpos = (tick-this.config.xmin)*this.config.xscale
-            xscale.innerHTML += `<span class="xtick" style="transform: translate(calc(${xpos}cm - 50%), 0);">${tick.toLocaleString('de-DE')}</span>`
-        }
-    }
-
-    configureYscale() {
-        const ticks = []
-        for (let tick = this.config.ymin; tick < this.config.ymax; tick += this.config.ydelta) {
-            if (tick == 0) continue
-            ticks.push(tick)
-        }
-        const yscale = this.element.getElementById("yscale")
-        for (let tick of ticks.reverse()) {
-            let ypos = (this.config.ymax-tick)*this.config.yscale
-            yscale.innerHTML += `<div class="ytick" style="transform: translate(0, calc(${ypos}cm - 0.5em));">${tick.toLocaleString('de-DE')}</div>`
         }
     }
 
@@ -585,16 +615,16 @@ class ChartConfig {
                 throw new ChartError(`${prop} muss eine positive Zahl größer 0 sein.`)
         }
 
-        for (let prop of ['xhidegrid','yhidegrid','xhidesubgrid','yhidesubgrid','xhideaxis','yhideaxis','xhidescale','yhidescale']) {
+        for (let prop of ['xhidegrid','yhidegrid','xhidesubgrid','yhidesubgrid','xhideaxis','yhideaxis','xhideticknumbers','yhideticknumbers']) {
             this[prop] = ! ["0", "false", false].includes(this[prop])
         }
 
         this.xscale = this.xsize/this.xdelta
         this.yscale = this.ysize/this.ydelta
         this.width = this.xmax - this.xmin
-        if (this.width < 0) throw new ChartError('xmin > xmax')
+        if (this.width <= 0) throw new ChartError('xmin >= xmax')
         this.height = this.ymax - this.ymin
-        if (this.height < 0) throw new ChartError('ymin > ymax')
+        if (this.height <= 0) throw new ChartError('ymin >= ymax')
 
         this.totalwidth = this.width*this.xscale
         this.totalheight = this.height*this.yscale
@@ -662,10 +692,13 @@ class XYGraphs extends HTMLElement {
             yhidegrid: false,
             xhidesubgrid: false,
             yhidesubgrid: false,
+            ticklinelengthin: 0.2,
+            ticklinelengthout: 0.2,
+            tickgaplinenumber: 0.1,
             xhideaxis: false,
             yhideaxis: false,
-            xhidescale: false,
-            yhidescale: false,
+            xhideticknumbers: false,
+            yhideticknumbers: false,
             legendposition: 'tl',
             xlegendpadding: '2mm',
             ylegendpadding: '2mm',
@@ -715,10 +748,13 @@ class XYGraphs extends HTMLElement {
     }
 
     setCSSVariables() {
-        this.chartelement.style.setProperty('--breite', `${this.config.totalwidth}cm`)
-        this.chartelement.style.setProperty('--hoehe', `${this.config.totalheight}cm`)
-        this.chartelement.style.setProperty('--xaxispos', `${this.config.ymax*this.config.yscale}cm`)
-        this.chartelement.style.setProperty('--yaxispos', `${-this.config.xmin*this.config.xscale}cm`)
+        this.chartelement.style.setProperty('--breite', `${this.config.totalwidth}`)
+        this.chartelement.style.setProperty('--hoehe', `${this.config.totalheight}`)
+        this.chartelement.style.setProperty('--xaxispos', `${this.config.ymax*this.config.yscale}`)
+        this.chartelement.style.setProperty('--yaxispos', `${-this.config.xmin*this.config.xscale}`)
+        this.chartelement.style.setProperty('--ticklinelengthin', `${this.config.ticklinelengthin}`)
+        this.chartelement.style.setProperty('--ticklinelengthout', `${this.config.ticklinelengthout}`)
+        this.chartelement.style.setProperty('--tickgaplinenumber', `${this.config.tickgaplinenumber}`)
     }
 
     parseGridAttribute(attr) {
