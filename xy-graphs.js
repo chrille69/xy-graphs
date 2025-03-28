@@ -611,10 +611,16 @@ class ChartConfig {
 
         arr = this.range.trim().split(/[ \t]+/)
         switch(arr.length) {
+            case 1:
+                this.xmin = 0
+                this.ymin = 0
+                this.xmax = arr[0]
+                this.ymax = arr[0]
+                break
             case 2:
-                this.xmin = arr[0]
-                this.ymin = arr[0]
-                this.xmax = arr[1]
+                this.xmin = 0
+                this.ymin = 0
+                this.xmax = arr[0]
                 this.ymax = arr[1]
                 break
             case 4:
@@ -624,7 +630,7 @@ class ChartConfig {
                 this.ymax = arr[3]
                 break
             default:
-                throw new ChartError(`grid-range muss zwei vier durch Whitespace grtrennte Zahlen besitzen: 'min max' oder 'xmin ymin xmax ymax'.`)
+                throw new ChartError(`grid-range muss ein, zwei oder vier durch Whitespace grtrennte Zahlen besitzen: 'max', 'min max' oder 'xmin ymin xmax ymax'.`)
         }
 
         arr = this.delta.trim().split(/[ \t]+/)
@@ -645,7 +651,7 @@ class ChartConfig {
                 throw new ChartError(`grid-delta muss zwei oder vier durch Whitespace grtrennte Zahlen besitzen. 'delta subdelta' oder 'xdelta ydelta xsubdelta ysubdelta'`)
         }
 
-        arr = this.hide.trim().split(/[ \t]+/)
+        arr = this.hidegrid.trim().split(/[ \t]+/)
         switch(arr.length) {
             case 1:
                 this.xhidegrid = arr[0]
@@ -668,6 +674,22 @@ class ChartConfig {
             default:
                 throw new ChartError(`grid-hide muss ein, zwei oder vier durch Whitespace grtrennte Zahlen besitzen. 'hideall', 'hide hidesub' oder 'xhide yhide xhidesub yhidesub'`)
         }
+
+        arr = this.hideaxis.trim().split(/[ \t]+/)
+        this.xhideaxis = arr[0] || 0
+        this.yhideaxis = arr[1] || arr[0] || 0
+
+        arr = this.hideticknumbers.trim().split(/[ \t]+/)
+        this.xhideticknumbers = arr[0] || 0
+        this.yhideticknumbers = arr[1] || arr[0] || 0
+
+        arr = this.ticklinelength.trim().split(/[ \t]+/)
+        this.ticklinelengthin = arr[0] || 0.2
+        this.ticklinelengthout = arr[1] || arr[0] || 0.2
+
+        arr = this.legendpadding.trim().split(/[ \t]+/)
+        this.xlegendpadding = arr[0] || '2mm'
+        this.ylegendpadding = arr[1] || arr[0] || '2mm'
 
         for (let prop of ['xsize','ysize','xdelta','ydelta','xsubdelta','ysubdelta']) {
             this[prop] = parseFloat(this[prop])
@@ -741,26 +763,18 @@ class XYGraphs extends HTMLElement {
         }
     }
 
-    getCSSVariable(name) {
-        return getComputedStyle(this).getPropertyValue(name)
-    }
-
     create() {
         this.configobject = {
             range: this.getCSSVariable('--grid-range') || '0 0 10 10',
             size: this.getCSSVariable('--grid-size') || '1 1',
             delta: this.getCSSVariable('--grid-delta') || '1 1 0.2 0.2',
-            hide: this.getCSSVariable('--grid-hide') || '0 0 0 0',
-            ticklinelengthin: this.getCSSVariable('--grid-ticklinelengthin') || 0.2,
-            ticklinelengthout: this.getCSSVariable('--grid-ticklinelengthout') || 0.2,
+            hidegrid: this.getCSSVariable('--grid-hidegrid') || '0 0 0 0',
+            hideaxis: this.getCSSVariable('--grid-hideaxis') || '0 0',
+            hideticknumbers: this.getCSSVariable('--grid-hideticknumbers') || '0 0',
+            ticklinelength: this.getCSSVariable('--grid-ticklinelength') || '0.2 0.2',
             tickgaplinenumber: this.getCSSVariable('--grid-tickgaplinenumber') || 0.1,
-            xhideaxis: this.getCSSVariable('--grid-xhideaxis') || false,
-            yhideaxis: this.getCSSVariable('--grid-yhideaxis') || false,
-            xhideticknumbers: this.getCSSVariable('--grid-xhideticknumbers') || false,
-            yhideticknumbers: this.getCSSVariable('--grid-yhideticknumbers') || false,
+            legendpadding: this.getCSSVariable('--grid-legendpadding') || '2mm 2mm',
             legendposition: this.getCSSVariable('--grid-legendposition') || 'tl',
-            xlegendpadding: this.getCSSVariable('--grid-xlegendpadding') || '2mm',
-            ylegendpadding: this.getCSSVariable('--grid-ylegendpadding') || '2mm',
         }
         this.emptygraph = {
             values: null,
@@ -804,6 +818,10 @@ class XYGraphs extends HTMLElement {
         if (chartcontainer.chartsvg.hasEmptyLegendList()) {
             this.chartelement.style.setProperty('--legendvisibility', 'collapse')
         }
+    }
+
+    getCSSVariable(name) {
+        return getComputedStyle(this).getPropertyValue(name)
     }
 
     setCSSVariables() {
