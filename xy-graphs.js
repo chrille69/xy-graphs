@@ -3,43 +3,44 @@ xyChartTemplate.innerHTML = `<style>
     :host {
         display: block;
         width: fit-content;
-    }
-    #chart {
+        --grid-ticklinelengthin: .2;
+        --grid-ticklinelengthout: .2;
+        --grid-tickgaplinenumber: .1;
         --breite: 15;
         --hoehe: 10;
         --yaxispos: 0;
         --xaxispos: 0;
         --pt: 0.0352777778px;
-        --ticklinelengthin: .2;
-        --ticklinelengthout: .2;
-        --tickgaplinenumber: .1;
         --legendvisibility: visible;
         --path: path('m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3');
-        display: inline-grid;
+    }
+    #chart {
+        display: grid;
         grid-template-columns: auto auto auto;
         grid-template-areas:
             ".      title"
             "ylabel chart"
             ".      xlabel";
     }
-    #charterrorname, #charterrormessage, charterrorstack {
+    #charterrorname, #charterrormessage, #charterrorstack {
         font-family: Courier;
     }
     #charterrorname {
         background-color: red;
         color: white;
     }
+    #error {
+        grid-area: error;
+        position: absolute;
+        background-color: red;
+        color: white;
+        font-family: 'Courier New', Courier, monospace;
+    }
     #overlaycontainer {
         position: relative;
         grid-area: chart;
         width: calc(var(--breite) * 1cm);
         height: calc(var(--hoehe) * 1cm);
-    }
-    #error {
-        position: absolute;
-        background-color: red;
-        color: white;
-        font-family: 'Courier New', Courier, monospace;
     }
     #legend {
         position: absolute;
@@ -78,12 +79,12 @@ xyChartTemplate.innerHTML = `<style>
         text-align: right;
         line-height: 1;
         width: calc(var(--breite) * 1cm);
-        top: calc(min(var(--xaxispos) * 1cm, var(--hoehe) * 1cm) + var(--ticklinelengthout) * 1cm + var(--tickgaplinenumber) * 1cm );
+        top: calc(min(var(--xaxispos) * 1cm, var(--hoehe) * 1cm) + var(--grid-ticklinelengthout) * 1cm + var(--grid-tickgaplinenumber) * 1cm );
     }
     #yaxislabel {
         position: absolute;
         text-align: right;
-        right: calc( min(var(--breite)* 1cm - var(--yaxispos) * 1cm, var(--breite) * 1cm) + var(--ticklinelengthout) * 1cm + var(--tickgaplinenumber) * 1cm);
+        right: calc( min(var(--breite)* 1cm - var(--yaxispos) * 1cm, var(--breite) * 1cm) + var(--grid-ticklinelengthout) * 1cm + var(--grid-tickgaplinenumber) * 1cm);
     }
     #standardslot {
         position: absolute;
@@ -94,19 +95,20 @@ xyChartTemplate.innerHTML = `<style>
         stroke-width: 1pt;
     }
     #xnumbers {
-        font-size: calc(12 * var(--pt));
+        font-size: calc(var(--tick-font-size-pt, 12) * var(--pt));
         text-anchor: middle;
         dominant-baseline: text-before-edge;
-        transform: translate(0, calc(var(--ticklinelengthout) * 1px + var(--tickgaplinenumber) * 1px));
+        transform: translate(0, calc(var(--grid-ticklinelengthout) * 1px + var(--grid-tickgaplinenumber) * 1px));
     }
     #ynumbers {
-        font-size: calc(12 * var(--pt));
+        font-size: calc(var(--tick-font-size-pt, 12) * var(--pt));
         text-anchor: end;
         dominant-baseline: central;
-        transform: translate(calc(var(--tickgaplinenumber) * -1px), 0);
+        transform: translate(calc(var(--grid-tickgaplinenumber) * -1px), 0);
     }
     #symbol-custompath {
         d: var(--path);
+        transform: var(--transform);
     }
     .no-scaling-stroke {
         vector-effect: non-scaling-stroke;
@@ -137,9 +139,9 @@ xyChartTemplate.innerHTML = `<style>
 <div>
     <div id="charterrorname"></div>
     <div id="charterrormessage"></div>
-    <pre id="charterrorstack"></pre>
+    <div id="charterrorstack" style="margin: 0;"></div>
 </div>
-<div id="chart" class="chart">
+<div id="chart" part="chart">
     <div id="title"><slot name="title"></slot></div>
     <div id="xlabel"><slot name="xlabel"></slot></div>
     <div id="ylabel"><slot name="ylabel"></slot></div>
@@ -648,7 +650,6 @@ function slotChanged(event, element) {
     }
 }
 
-
 class XYGraphs extends HTMLElement {
 
     connectedCallback() {
@@ -676,32 +677,36 @@ class XYGraphs extends HTMLElement {
         }
     }
 
+    getCSSVariable(name) {
+        return getComputedStyle(this).getPropertyValue(name)
+    }
+
     create() {
         this.configobject = {
-            xsize: 1,
-            ysize: 1,
-            xdelta: 1,
-            ydelta: 1,
-            xsubdelta: 0.2,
-            ysubdelta: 0.2,
-            xmin: 0,
-            xmax: 10,
-            ymin: 0,
-            ymax: 10,
-            xhidegrid: false,
-            yhidegrid: false,
-            xhidesubgrid: false,
-            yhidesubgrid: false,
-            ticklinelengthin: 0.2,
-            ticklinelengthout: 0.2,
-            tickgaplinenumber: 0.1,
-            xhideaxis: false,
-            yhideaxis: false,
-            xhideticknumbers: false,
-            yhideticknumbers: false,
-            legendposition: 'tl',
-            xlegendpadding: '2mm',
-            ylegendpadding: '2mm',
+            xsize: this.getCSSVariable('--grid-xsize') || 1,
+            ysize: this.getCSSVariable('--grid-ysize') || 1,
+            xdelta: this.getCSSVariable('--grid-xdelta') || 1,
+            ydelta: this.getCSSVariable('--grid-ydelta') || 1,
+            xsubdelta: this.getCSSVariable('--grid-xsubdelta') || 0.2,
+            ysubdelta: this.getCSSVariable('--grid-ysubdelta') || 0.2,
+            xmin: this.getCSSVariable('--grid-xmin') || 0,
+            xmax: this.getCSSVariable('--grid-xmax') || 10,
+            ymin: this.getCSSVariable('--grid-ymin') || 0,
+            ymax: this.getCSSVariable('--grid-ymax') || 10,
+            xhidegrid: this.getCSSVariable('--grid-xhidegrid') || false,
+            yhidegrid: this.getCSSVariable('--grid-yhidegrid') || false,
+            xhidesubgrid: this.getCSSVariable('--grid-xhidesubgrid') || false,
+            yhidesubgrid: this.getCSSVariable('--grid-yhidesubgrid') || false,
+            ticklinelengthin: this.getCSSVariable('--grid-ticklinelengthin') || 0.2,
+            ticklinelengthout: this.getCSSVariable('--grid-ticklinelengthout') || 0.2,
+            tickgaplinenumber: this.getCSSVariable('--grid-tickgaplinenumber') || 0.1,
+            xhideaxis: this.getCSSVariable('--grid-xhideaxis') || false,
+            yhideaxis: this.getCSSVariable('--grid-yhideaxis') || false,
+            xhideticknumbers: this.getCSSVariable('--grid-xhideticknumbers') || false,
+            yhideticknumbers: this.getCSSVariable('--grid-yhideticknumbers') || false,
+            legendposition: this.getCSSVariable('--grid-legendposition') || 'tl',
+            xlegendpadding: this.getCSSVariable('--grid-xlegendpadding') || '2mm',
+            ylegendpadding: this.getCSSVariable('--grid-ylegendpadding') || '2mm',
         }
         this.emptygraph = {
             values: null,
@@ -748,13 +753,10 @@ class XYGraphs extends HTMLElement {
     }
 
     setCSSVariables() {
-        this.chartelement.style.setProperty('--breite', `${this.config.totalwidth}`)
-        this.chartelement.style.setProperty('--hoehe', `${this.config.totalheight}`)
-        this.chartelement.style.setProperty('--xaxispos', `${this.config.ymax*this.config.yscale}`)
-        this.chartelement.style.setProperty('--yaxispos', `${-this.config.xmin*this.config.xscale}`)
-        this.chartelement.style.setProperty('--ticklinelengthin', `${this.config.ticklinelengthin}`)
-        this.chartelement.style.setProperty('--ticklinelengthout', `${this.config.ticklinelengthout}`)
-        this.chartelement.style.setProperty('--tickgaplinenumber', `${this.config.tickgaplinenumber}`)
+        this.style.setProperty('--breite', `${this.config.totalwidth}`)
+        this.style.setProperty('--hoehe', `${this.config.totalheight}`)
+        this.style.setProperty('--xaxispos', `${this.config.ymax*this.config.yscale}`)
+        this.style.setProperty('--yaxispos', `${-this.config.xmin*this.config.xscale}`)
     }
 
     parseGridAttribute(attr) {

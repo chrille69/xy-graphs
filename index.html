@@ -28,6 +28,10 @@
         font-size: large;
         font-family: 'Lucida Sans', Verdana, sans-serif;
     }
+    * {
+        --grid-xsize: 2;
+        --grid-ysize: 2;
+    }
     ::part(graph1) {
         stroke:green;
         fill: red;
@@ -50,9 +54,7 @@
 <xy-graphs id="chart2"
         grid-ymax="2"
         grid-ymin="-2"
-        grid-xsize="2"
         grid-ticklinelengthout="0"
-        grid-ysize="2"
         graph-expr-1="sin(x)"
         graph-symbol-1="custompath"
         graph-expr-2="cos(x)"
