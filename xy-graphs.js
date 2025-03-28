@@ -184,9 +184,9 @@ xyChartTemplate.innerHTML = `<style>
             <div id="legend-list"></div>
             <slot name="legend-after" id="legend-after"></slot>
         </div>
-        <slot></slot>
         <div id="xaxislabel"><slot name="xaxislabel">x</slot></div>
         <div id="yaxislabel"><slot name="yaxislabel">y</slot></div>
+        <slot></slot>
         <div id="error"></div>
     </div>
 </div>`
@@ -605,16 +605,80 @@ class ChartConfig {
     constructor(configobject) {
         Object.assign(this, configobject)
 
-        for (let prop of ['xmax','xmin','ymax','ymin']) {
-            this[prop] = parseFloat(this[prop])
-            if (isNaN(this[prop]))
-                throw new ChartError(`${prop} muss eine Zahl sein.`)
+        let arr = this.size.trim().split(/[ \t]+/)
+        this.xsize = arr[0] || 1
+        this.ysize = arr[1] || arr[0] || 1
+
+        arr = this.range.trim().split(/[ \t]+/)
+        switch(arr.length) {
+            case 2:
+                this.xmin = arr[0]
+                this.ymin = arr[0]
+                this.xmax = arr[1]
+                this.ymax = arr[1]
+                break
+            case 4:
+                this.xmin = arr[0]
+                this.ymin = arr[1]
+                this.xmax = arr[2]
+                this.ymax = arr[3]
+                break
+            default:
+                throw new ChartError(`grid-range muss zwei vier durch Whitespace grtrennte Zahlen besitzen: 'min max' oder 'xmin ymin xmax ymax'.`)
+        }
+
+        arr = this.delta.trim().split(/[ \t]+/)
+        switch(arr.length) {
+            case 2:
+                this.xdelta = arr[0]
+                this.ydelta = arr[0]
+                this.xsubdelta = arr[1]
+                this.ysubdelta = arr[1]
+                break
+            case 4:
+                this.xdelta = arr[0]
+                this.ydelta = arr[1]
+                this.xsubdelta = arr[2]
+                this.ysubdelta = arr[3]
+                break
+            default:
+                throw new ChartError(`grid-delta muss zwei oder vier durch Whitespace grtrennte Zahlen besitzen. 'delta subdelta' oder 'xdelta ydelta xsubdelta ysubdelta'`)
+        }
+
+        arr = this.hide.trim().split(/[ \t]+/)
+        switch(arr.length) {
+            case 1:
+                this.xhidegrid = arr[0]
+                this.yhidegrid = arr[0]
+                this.xhidesubgrid = arr[0]
+                this.yhidesubgrid = arr[0]
+                break
+            case 2:
+                this.xhidegrid = arr[0]
+                this.yhidegrid = arr[0]
+                this.xhidesubgrid = arr[1]
+                this.yhidesubgrid = arr[1]
+                break
+            case 4:
+                this.xhidegrid = arr[0]
+                this.yhidegrid = arr[1]
+                this.xhidesubgrid = arr[2]
+                this.yhidesubgrid = arr[3]
+                break
+            default:
+                throw new ChartError(`grid-hide muss ein, zwei oder vier durch Whitespace grtrennte Zahlen besitzen. 'hideall', 'hide hidesub' oder 'xhide yhide xhidesub yhidesub'`)
         }
 
         for (let prop of ['xsize','ysize','xdelta','ydelta','xsubdelta','ysubdelta']) {
             this[prop] = parseFloat(this[prop])
             if (isNaN(this[prop]) || this[prop] <= 0)
                 throw new ChartError(`${prop} muss eine positive Zahl größer 0 sein.`)
+        }
+
+        for (let prop of ['xmax','xmin','ymax','ymin','tickgaplinenumber','ticklinelengthin','ticklinelengthout']) {
+            this[prop] = parseFloat(this[prop])
+            if (isNaN(this[prop]))
+                throw new ChartError(`${prop} muss eine Zahl sein.`)
         }
 
         for (let prop of ['xhidegrid','yhidegrid','xhidesubgrid','yhidesubgrid','xhideaxis','yhideaxis','xhideticknumbers','yhideticknumbers']) {
@@ -683,20 +747,10 @@ class XYGraphs extends HTMLElement {
 
     create() {
         this.configobject = {
-            xsize: this.getCSSVariable('--grid-xsize') || 1,
-            ysize: this.getCSSVariable('--grid-ysize') || 1,
-            xdelta: this.getCSSVariable('--grid-xdelta') || 1,
-            ydelta: this.getCSSVariable('--grid-ydelta') || 1,
-            xsubdelta: this.getCSSVariable('--grid-xsubdelta') || 0.2,
-            ysubdelta: this.getCSSVariable('--grid-ysubdelta') || 0.2,
-            xmin: this.getCSSVariable('--grid-xmin') || 0,
-            xmax: this.getCSSVariable('--grid-xmax') || 10,
-            ymin: this.getCSSVariable('--grid-ymin') || 0,
-            ymax: this.getCSSVariable('--grid-ymax') || 10,
-            xhidegrid: this.getCSSVariable('--grid-xhidegrid') || false,
-            yhidegrid: this.getCSSVariable('--grid-yhidegrid') || false,
-            xhidesubgrid: this.getCSSVariable('--grid-xhidesubgrid') || false,
-            yhidesubgrid: this.getCSSVariable('--grid-yhidesubgrid') || false,
+            range: this.getCSSVariable('--grid-range') || '0 0 10 10',
+            size: this.getCSSVariable('--grid-size') || '1 1',
+            delta: this.getCSSVariable('--grid-delta') || '1 1 0.2 0.2',
+            hide: this.getCSSVariable('--grid-hide') || '0 0 0 0',
             ticklinelengthin: this.getCSSVariable('--grid-ticklinelengthin') || 0.2,
             ticklinelengthout: this.getCSSVariable('--grid-ticklinelengthout') || 0.2,
             tickgaplinenumber: this.getCSSVariable('--grid-tickgaplinenumber') || 0.1,
