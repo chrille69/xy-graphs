@@ -187,6 +187,7 @@ xyChartTemplate.innerHTML = `<style>
         </div>
         <div id="xaxislabel"><slot name="xaxislabel"></slot></div>
         <div id="yaxislabel"><slot name="yaxislabel"></slot></div>
+        <div style="position: absolute"><slot name="above"></slot></div>
         <slot></slot>
         <div id="error"></div>
     </div>
@@ -207,7 +208,7 @@ class ChartSvg {
         this.graphgroup = element.getElementById("graphs")
 
         this.svg.setAttribute("preserveAspectRatio", 'none')
-        this.svg.setAttribute("viewBox", `${this.config.totalxmin} ${-this.config.totalymax} ${this.config.totalwidth} ${this.config.totalheight}`)
+        this.svg.setAttribute("viewBox", `${this.config.viewbox}`)
         this.svg.setAttribute("width", `${this.config.totalwidth}cm`)
         this.svg.setAttribute("height", `${this.config.totalheight}cm`)
 
@@ -730,19 +731,24 @@ class ChartConfig {
         this.totalymin = this.ymin*this.yscale
         this.totalxmax = this.xmax*this.xscale
         this.totalymax = this.ymax*this.yscale
+        this.viewbox = `${this.totalxmin} ${-this.totalymax} ${this.totalwidth} ${this.totalheight}`
+        this.viewbox2 = `${this.xmin} ${-this.ymax} ${this.width} ${this.height}`
     }
 }
 
 
 function slotChanged(event, element) {
-    const tmpele = event.target.attributes["name"]
-    if (!tmpele)
+    const slotname = event.target.attributes["name"]
+    if (!slotname)
         return
-    switch(tmpele.value) {
+    switch(slotname.value) {
         case("legend-before"):
         case("legend-after"):
             element.chartelement.style.setProperty('--legendvisibility', "visible")
             break
+        case("under"):
+        case("above"):
+            element.setSVGAtrributes(element.querySelector(`svg[slot=${slotname.value}`))
     }
 }
 
@@ -879,6 +885,16 @@ class XYGraphs extends HTMLElement {
             this.graphs[graphid] = {...this.emptygraph, id: graphid, order: this.graphorder++ }
 
         this.graphs[graphid][graphprop] = attr.value
+    }
+
+    setSVGAtrributes(svgelement) {
+        if (!svgelement)
+            return
+
+        svgelement.setAttribute('viewBox', this.config.viewbox2)
+        svgelement.setAttribute('width', `${this.config.totalwidth}cm`)
+        svgelement.setAttribute('height', `${this.config.totalheight}cm`)
+        svgelement.style.transform = `scale(1,-1) translate(0, ${this.config.height+this.config.ymin})`
     }
 
     errormessage(msg) {
