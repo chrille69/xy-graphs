@@ -3,13 +3,8 @@ xyChartTemplate.innerHTML = `<style>
     :host {
         display: block;
         width: fit-content;
-        --grid-ticklinelengthin: .2;
-        --grid-ticklinelengthout: .2;
-        --grid-tickgaplinenumber: .1;
-        --breite: 15;
+        --breite: 10;
         --hoehe: 10;
-        --yaxispos: 0;
-        --xaxispos: 0;
         --pt: 0.0352777778px;
         --legendvisibility: visible;
         --path: path('m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3');
@@ -56,6 +51,12 @@ xyChartTemplate.innerHTML = `<style>
         grid-area: chart;
         overflow: visible;
         position: absolute;
+        transform: scale(1, -1);
+    }
+    #svg text {
+        transform: scale(calc(1 / var(--xscale, 1)), calc(-1 / var(--yscale, 1)));
+        transform-origin: center;
+        transform-box: content-box;
     }
     #title {
         grid-area: title;
@@ -94,17 +95,13 @@ xyChartTemplate.innerHTML = `<style>
         stroke: black;
         stroke-width: 1pt;
     }
-    #xnumbers {
-        font-size: calc(var(--tick-font-size-pt, 12) * var(--pt));
-        text-anchor: middle;
-        dominant-baseline: text-before-edge;
-        transform: translate(0, calc(var(--grid-ticklinelengthout) * 1px + var(--grid-tickgaplinenumber) * 1px));
-    }
+    #xnumbers,
     #ynumbers {
         font-size: calc(var(--tick-font-size-pt, 12) * var(--pt));
-        text-anchor: end;
-        dominant-baseline: central;
-        transform: translate(calc(var(--grid-tickgaplinenumber) * -1px), 0);
+    }
+    #xnumbers {
+        transform: translate(0, -50%);
+        transform-box: content-box;
     }
     #symbol-custompath {
         d: var(--path);
@@ -134,6 +131,16 @@ xyChartTemplate.innerHTML = `<style>
         vector-effect: non-scaling-stroke;
         transform-origin: center;
         transform-box: fill-box;
+    }
+    .xnumber {
+        /*transform-origin: top !important;*/
+        text-anchor: middle;
+        dominant-baseline: central;
+    }
+    .ynumber {
+        transform-origin: right !important;
+        text-anchor: end;
+        dominant-baseline: central;
     }
 </style>
 <div>
@@ -185,8 +192,8 @@ xyChartTemplate.innerHTML = `<style>
             <div id="legend-list"></div>
             <slot name="legend-after" id="legend-after"></slot>
         </div>
-        <div id="xaxislabel"><slot name="xaxislabel"></slot></div>
-        <div id="yaxislabel"><slot name="yaxislabel"></slot></div>
+        <div id="xaxislabel"><slot name="xaxislabel">x</slot></div>
+        <div id="yaxislabel"><slot name="yaxislabel">y</slot></div>
         <div style="position: absolute"><slot name="above"></slot></div>
         <slot></slot>
         <div id="error"></div>
@@ -208,7 +215,7 @@ class ChartSvg {
         this.graphgroup = element.getElementById("graphs")
 
         this.svg.setAttribute("preserveAspectRatio", 'none')
-        this.svg.setAttribute("viewBox", `${this.config.viewbox}`)
+        this.svg.setAttribute("viewBox", `${this.config.viewbox3}`)
         this.svg.setAttribute("width", `${this.config.totalwidth}cm`)
         this.svg.setAttribute("height", `${this.config.totalheight}cm`)
 
@@ -227,10 +234,10 @@ class ChartSvg {
         this.sin30 = 0.5
     
         const clipgraphrect = this.svg.getElementById("clipgraphrect")
-        clipgraphrect.setAttribute('x',  this.config.totalxmin)
-        clipgraphrect.setAttribute('y', -this.config.totalymax)
-        clipgraphrect.setAttribute('width',  this.config.totalwidth)
-        clipgraphrect.setAttribute('height', this.config.totalheight)
+        clipgraphrect.setAttribute('x',  this.config.xmin)
+        clipgraphrect.setAttribute('y',  this.config.ymin)
+        clipgraphrect.setAttribute('width',  this.config.width)
+        clipgraphrect.setAttribute('height', this.config.height)
     }
 
     tupelToPoint(tupel) {
@@ -245,7 +252,7 @@ class ChartSvg {
         if (isNaN(y))
             throw new ChartError(`${tupel[1]} ist keine Zahl.`)
 
-        return {x: x*this.config.xscale, y: - y*this.config.yscale}
+        return {x: x, y: y}
     }
 
     appendGraph(graphinfo) {
@@ -280,7 +287,7 @@ class ChartSvg {
         }
     }
 
-    createSymbolGroup(values, graphinfo) {
+    createSymbolGroup(values, graphinfo, noscale=false) {
 
         if (! Array.isArray(values))
             throw new ChartError(`values muss ein zweidimensionales Array sein.`)
@@ -293,7 +300,16 @@ class ChartSvg {
             use.setAttribute('x', point.x)
             use.setAttribute('y', point.y)
             use.setAttribute('part', `graph${graphinfo.id}`)
-            group.appendChild(use)
+            if (!noscale) {
+                const scalegroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
+                scalegroup.appendChild(use)
+                scalegroup.style['transform'] = `scale(${1/this.config.xscale}, ${-1/this.config.yscale})`
+                scalegroup.style['transform-box'] = 'content-box'
+                group.appendChild(scalegroup)
+            }
+            else {
+                group.appendChild(use)
+            }
         }
         group.style['stroke'] = graphinfo.strokecolor
         group.style['stroke-width'] = '1.3pt'
@@ -390,8 +406,9 @@ class ChartSvg {
         symbolsvg.setAttribute('width', '0.5cm')
         symbolsvg.setAttribute('height', '0.5cm')
         symbolsvg.setAttribute('viewBox', `-0.25 -0.25 .5 .5`)
+
         div.appendChild(symbolsvg)
-        const element = this.createSymbolGroup([[0,0]], info)
+        const element = this.createSymbolGroup([[0,0]], info, true)
         symbolsvg.appendChild(element)
         div.innerHTML += `<div>${info.name ? info.name : (info.expr ? info.expr : info.id)}</div>`
     }
@@ -403,12 +420,12 @@ class ChartSvg {
     drawXaxis() {
         let y = 0;
         if (this.config.ymin > 0) {
-            y = -this.config.totalymin
+            y = -this.config.ymin
         }
         const element = this.svg.getElementById("xaxisline")
-        element.setAttribute("x1", this.config.totalxmin)
+        element.setAttribute("x1", this.config.xmin)
         element.setAttribute("y1", y)
-        element.setAttribute("x2", this.config.totalxmax-10*this.linewidth)
+        element.setAttribute("x2", this.config.xmax-10*this.linewidth)
         element.setAttribute("y2", y)
         if (this.config.xhideaxis)
             element.style.display = 'none'
@@ -417,13 +434,13 @@ class ChartSvg {
     drawYaxis() {
         let x = 0;
         if (this.config.xmin > 0) {
-            x = this.config.totalxmin
+            x = this.config.xmin
         }
         const element = this.svg.getElementById("yaxisline")
         element.setAttribute("x1", x)
-        element.setAttribute("y1", -this.config.totalymin)
+        element.setAttribute("y1", this.config.ymin)
         element.setAttribute("x2", x)
-        element.setAttribute("y2", -this.config.totalymax + 10*this.linewidth)
+        element.setAttribute("y2", this.config.ymax - 10*this.linewidth)
         if (this.config.yhideaxis)
             element.style.display = 'none'
     }
@@ -436,9 +453,11 @@ class ChartSvg {
         let path=""
         for (let i = this.config.xmin; i < this.config.xmax; i += this.config.xdelta) {
             if (i == 0) continue
-            let pos = i*this.config.xscale
-            path += `M${pos}, ${this.config.ticklinelengthout} L${pos}, -${this.config.ticklinelengthin}`
-            this.addNumber(numbergroup, i, pos, 0)
+            let xpos = i
+            let ypostext = - (this.config.ticklinelengthout + this.config.tickgaplinenumber) / this.config.yscale
+            path += `M${xpos}, -${this.config.ticklinelengthout / this.config.yscale} L${xpos}, ${this.config.ticklinelengthin / this.config.yscale}`
+
+            this.addNumber(numbergroup, i, xpos, ypostext, 'xnumber')
         }
         if (this.config.ticklinelengthout != 0 || this.config.ticklinelengthin != 0) {
             const element = this.svg.getElementById("xticklines")
@@ -456,9 +475,12 @@ class ChartSvg {
         let path = ""
         for (let i = this.config.ymin; i < this.config.ymax; i += this.config.ydelta) {
             if (i == 0) continue
-            let pos = -i*this.config.yscale
-            path += `M-${this.config.ticklinelengthout},${pos} L${this.config.ticklinelengthin},${pos}`
-            this.addNumber(numbergroup, i, -this.config.ticklinelengthout, pos)
+            let ypos = i
+            let xpostext = - (this.config.ticklinelengthout + this.config.tickgaplinenumber) / this.config.xscale
+            path += `M-${this.config.ticklinelengthout / this.config.xscale},${ypos} L${this.config.ticklinelengthin / this.config.xscale},${ypos}`
+            this.addNumber(numbergroup, i, xpostext, ypos, 'ynumber')
+
+
         }
         if (this.config.ticklinelengthout != 0 || this.config.ticklinelengthin != 0) {
             const element = this.svg.getElementById("yticklines")
@@ -468,8 +490,8 @@ class ChartSvg {
             numbergroup.style.display = "none"
     }
 
-    addNumber(element, number, x, y) {
-        element.innerHTML += `<text x="${x}" y="${y}" >${number}</text>`
+    addNumber(element, number, x, y, classes) {
+        element.innerHTML += `<text class="${classes}" x="${x}" y="${y}" >${number}</text>`
     }
 
     setSpaceBottom(numbergroup, container) {
@@ -489,14 +511,14 @@ class ChartSvg {
         let dgrid = ""
 
         if (! this.config.xhidegrid) {
-            for (let i = this.config.totalxmin; i <= this.config.totalxmax; i += this.config.xdelta*this.config.xscale) {
-                dgrid += ` M${i} ${-this.config.totalymin} L${i} ${-this.config.totalymax}`
+            for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
+                dgrid += ` M${i} ${this.config.ymin} L${i} ${this.config.ymax}`
             }
         }
         
         if (! this.config.yhidegrid) {
-            for (let i = this.config.totalymin; i <= this.config.totalymax; i += this.config.ydelta*this.config.yscale) {
-                dgrid += ` M${this.config.totalxmin} ${-i} L${this.config.totalxmax} ${-i}`
+            for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
+                dgrid += ` M${this.config.xmin} ${i} L${this.config.xmax} ${i}`
             }
         }
 
@@ -511,14 +533,14 @@ class ChartSvg {
         let dsubgrid = ''
 
         if (! this.config.xhidesubgrid) {
-            for (let i = this.config.totalxmin; i <= this.config.totalxmax; i += this.config.xsubdelta*this.config.xscale) {
-                dsubgrid += ` M${i} ${-this.config.totalymin} L${i} ${-this.config.totalymax}`
+            for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xsubdelta) {
+                dsubgrid += ` M${i} ${this.config.ymin} L${i} ${this.config.ymax}`
             }
         }
 
         if (! this.config.yhidesubgrid) {
-            for (let i = this.config.totalymin; i <= this.config.totalymax; i += this.config.ysubdelta*this.config.yscale) {
-                dsubgrid += ` M${this.config.totalxmin} ${-i} L${this.config.totalxmax} ${-i}`
+            for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ysubdelta) {
+                dsubgrid += ` M${this.config.xmin} ${i} L${this.config.xmax} ${i}`
             }
         }
 
@@ -731,8 +753,9 @@ class ChartConfig {
         this.totalymin = this.ymin*this.yscale
         this.totalxmax = this.xmax*this.xscale
         this.totalymax = this.ymax*this.yscale
-        this.viewbox = `${this.totalxmin} ${-this.totalymax} ${this.totalwidth} ${this.totalheight}`
-        this.viewbox2 = `${this.xmin} ${-this.ymax} ${this.width} ${this.height}`
+        this.viewbox = `${this.totalxmin} -${this.totalymax} ${this.totalwidth} ${this.totalheight}`
+        this.viewbox2 = `${this.xmin} -${this.ymax} ${this.width} ${this.height}`
+        this.viewbox3 = `${this.xmin} ${this.ymin} ${this.width} ${this.height}`
     }
 }
 
@@ -788,7 +811,7 @@ class XYGraphs extends HTMLElement {
             hideaxis: this.getCSSVariable('--grid-hideaxis') || '0 0',
             hideticknumbers: this.getCSSVariable('--grid-hideticknumbers') || '0 0',
             ticklinelength: this.getCSSVariable('--grid-ticklinelength') || '0.2 0.2',
-            tickgaplinenumber: this.getCSSVariable('--grid-tickgaplinenumber') || 0.1,
+            tickgaplinenumber: this.getCSSVariable('--grid-tickgaplinenumber') || '0.1',
             legendpadding: this.getCSSVariable('--grid-legendpadding') || '2mm 2mm',
             legendposition: this.getCSSVariable('--grid-legendposition') || 'tl',
         }
@@ -837,14 +860,19 @@ class XYGraphs extends HTMLElement {
     }
 
     getCSSVariable(name) {
-        return getComputedStyle(this).getPropertyValue(name)
+        let wert = getComputedStyle(this).getPropertyValue(name)
+        return wert
     }
 
     setCSSVariables() {
         this.style.setProperty('--breite', `${this.config.totalwidth}`)
         this.style.setProperty('--hoehe', `${this.config.totalheight}`)
-        this.style.setProperty('--xaxispos', `${this.config.ymax*this.config.yscale}`)
-        this.style.setProperty('--yaxispos', `${-this.config.xmin*this.config.xscale}`)
+        this.style.setProperty('--xaxispos', `${this.config.totalymax}`)
+        this.style.setProperty('--yaxispos', `${this.config.totalxmin}`)
+        this.style.setProperty('--grid-ticklinelengthout', `${this.config.ticklinelengthout}`)
+        this.style.setProperty('--grid-tickgaplinenumber', `${this.config.tickgaplinenumber}`)
+        this.style.setProperty('--xscale', `${this.config.xscale}`)
+        this.style.setProperty('--yscale', `${this.config.yscale}`)
     }
 
     parseGridAttribute(attr) {
@@ -888,13 +916,10 @@ class XYGraphs extends HTMLElement {
     }
 
     setSVGAtrributes(svgelement) {
-        if (!svgelement)
-            return
-
-        svgelement.setAttribute('viewBox', this.config.viewbox2)
+        svgelement.setAttribute('viewBox', this.config.viewbox3)
         svgelement.setAttribute('width', `${this.config.totalwidth}cm`)
         svgelement.setAttribute('height', `${this.config.totalheight}cm`)
-        svgelement.style.transform = `scale(1,-1) translate(0, ${this.config.height+this.config.ymin})`
+        svgelement.style.transform = `scale(1, -1)`
     }
 
     errormessage(msg) {
