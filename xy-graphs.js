@@ -146,6 +146,7 @@ xyChartTemplate.innerHTML = `<style>
     <div id="xlabel"><slot name="xlabel"></slot></div>
     <div id="ylabel"><slot name="ylabel"></slot></div>
     <div id="overlaycontainer">
+        <div style="position: absolute"><slot name="under"></slot></div>
         <svg id="svg">
             <defs>
                 <marker id="fancyarrow" preserveAspectRatio="none" viewBox="-10 -2 10 4"
@@ -167,7 +168,6 @@ xyChartTemplate.innerHTML = `<style>
                 <path id="grid" part="grid" class="no-scaling-stroke grid"></path>
                 <path id="subgrid" part="subgrid" class="no-scaling-stroke subgrid"></path>
             </g>
-            <g id="graphs" clip-path="url(#clipgraph)"></g>
             <g id="xaxis" class="xaxis">
                 <line id="xaxisline" part="xaxisline" class="no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
                 <path id="xticklines" part="xticklines" class="ticklines no-scaling-stroke" />
@@ -178,14 +178,15 @@ xyChartTemplate.innerHTML = `<style>
                 <path id="yticklines" part="yticklines" class="ticklines no-scaling-stroke" />
                 <g id="ynumbers" class="ynumbers" />
             </g>
+            <g id="graphs" clip-path="url(#clipgraph)"></g>
         </svg>
         <div id="legend" part="legend">
             <slot name="legend-before" id="legend-before"></slot>
             <div id="legend-list"></div>
             <slot name="legend-after" id="legend-after"></slot>
         </div>
-        <div id="xaxislabel"><slot name="xaxislabel">x</slot></div>
-        <div id="yaxislabel"><slot name="yaxislabel">y</slot></div>
+        <div id="xaxislabel"><slot name="xaxislabel"></slot></div>
+        <div id="yaxislabel"><slot name="yaxislabel"></slot></div>
         <slot></slot>
         <div id="error"></div>
     </div>
@@ -314,9 +315,9 @@ class ChartSvg {
         }
         path.setAttribute("d", dpath)
         path.setAttribute('part', `graph${graphinfo.id}`)
-        path.style['stroke'] = graphinfo.strokecolor
-        path.style['stroke-width'] = '1.3pt'
-        path.style['fill'] = "none"
+        path.style['stroke'] = `var(--graph${graphinfo.id}-stroke, ${graphinfo.strokecolor})`
+        path.style['stroke-width'] = `var(--${graphinfo.id}-width, 1.3pt)`
+        path.style['fill'] = `var(--${graphinfo.id}-fill, none)`
         path.style['vector-effect'] = "non-scaling-stroke"
         return path
     }
@@ -354,8 +355,11 @@ class ChartSvg {
         if (step < 0 && start < end)
             throw new ChartError(`step < 0 aber end > start.`)
 
+        if (start == end)
+            throw new ChartError(`start = end ist unsinnig.`)
+        
         const values = []
-        for (let i = start; i <= end && start <= end || i >= end && start >= end; i += step) {
+        for (let i = start; i < end && start <= end || i > end && start >= end; i += step) {
             try {
                 tupel = [i, math.evaluate(graphinfo.expr, { 'x': i })]
                 if (tupel[1] == Infinity)
@@ -367,6 +371,12 @@ class ChartSvg {
             }
         }
 
+        // Der obere Wert wird aufgrund möglicher Fließkommazahlenfehlern extra berechnet
+        tupel = [end, math.evaluate(graphinfo.expr, { 'x': end })]
+        if (tupel[1] == Infinity)
+            throw new ChartError(`Bis zur Unendlichkeit und noch viel weiter...`)
+        values.push(tupel)
+        
         return values
     }
 
