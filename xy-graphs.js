@@ -228,6 +228,13 @@ class ChartSvg {
 
         this.linewidth = 0.0352777778 // 1pt in cm
 
+        this.xticks = this.createTicks(this.config.xmin, this.config.xmax, this.config.xdelta)
+        this.yticks = this.createTicks(this.config.ymin, this.config.ymax, this.config.ydelta)
+        this.xsubticks = this.createTicks(this.config.xmin, this.config.xmax, this.config.xsubdelta)
+        this.ysubticks = this.createTicks(this.config.ymin, this.config.ymax, this.config.ysubdelta)
+
+        this.createObservers()
+
         this.drawSubgrid()
         this.drawGrid()
 
@@ -245,6 +252,7 @@ class ChartSvg {
         clipgraphrect.setAttribute('y',  this.config.ymin)
         clipgraphrect.setAttribute('width',  this.config.width)
         clipgraphrect.setAttribute('height', this.config.height)
+
     }
 
     tupelToPoint(tupel) {
@@ -446,53 +454,76 @@ class ChartSvg {
             element.style.display = 'none'
     }
 
-    drawXTicks() {
-        const numbergroup = this.svg.getElementById("xnumbers")
-        const container = this.element.getElementById("overlaycontainer")
-        const observer = new ResizeObserver(this.setSpaceBottom.bind(this))
-        observer.observe(numbergroup)
-        let path=""
-        for (let i = this.config.xmin; i < this.config.xmax; i += this.config.xdelta) {
-            if (i == 0) continue
-            let xpos = i
-            let ypostext = - (this.config.ticklinelengthout + this.config.tickgaplinenumber) / this.config.yscale
-            path += `M${xpos}, -${this.config.ticklinelengthout / this.config.yscale} L${xpos}, ${this.config.ticklinelengthin / this.config.yscale}`
+    createTicks(xmin, xmax, delta) {
+        let ticks = []
 
-            this.addNumber(numbergroup, i, xpos, ypostext, 'xnumber')
+        if (xmin < 0 && xmax > 0) {
+            let xvalue = 0
+            while(xvalue < xmax) {
+                ticks.push(xvalue)
+                xvalue += delta
+            }
+            xvalue = -delta
+            while(xvalue >= xmin) {
+                ticks.push(xvalue)
+                xvalue -= delta
+            }
+        }
+        else {
+            let xvalue = xmin
+            while(xvalue < xmax) {
+                ticks.push(xvalue)
+                xvalue += delta
+            }
+        }
+        return ticks
+    }
+
+    drawXTicks() {
+        let path=""
+        for (let tick of this.xticks) {
+            if (tick == 0)
+                continue
+
+            let ypostext = - (this.config.ticklinelengthout + this.config.tickgaplinenumber) / this.config.yscale
+            path += `M${tick}, -${this.config.ticklinelengthout / this.config.yscale} L${tick}, ${this.config.ticklinelengthin / this.config.yscale}`
+
+            if (! this.config.xhideticknumbers)
+                this.addNumber(this.xnumbers, tick, tick, ypostext, 'xnumber')
         }
         if (this.config.ticklinelengthout != 0 || this.config.ticklinelengthin != 0) {
             const element = this.svg.getElementById("xticklines")
             element.setAttribute("d", path)
         }
-        if (this.config.xhideticknumbers) 
-            numbergroup.style.display = "none"
     }
 
     drawYTicks() {
-        const numbergroup = this.svg.getElementById("ynumbers")
-        const container = this.element.getElementById("overlaycontainer")
-        const observer = new ResizeObserver(this.setSpaceLeft.bind(this))
-        observer.observe(numbergroup)
         let path = ""
-        for (let i = this.config.ymin; i < this.config.ymax; i += this.config.ydelta) {
-            if (i == 0) continue
-            let ypos = i
+        for (let tick of this.yticks) {
+            if (tick == 0)
+                continue
+
             let xpostext = - (this.config.ticklinelengthout + this.config.tickgaplinenumber) / this.config.xscale
-            path += `M-${this.config.ticklinelengthout / this.config.xscale},${ypos} L${this.config.ticklinelengthin / this.config.xscale},${ypos}`
-            this.addNumber(numbergroup, i, xpostext, ypos, 'ynumber')
+            path += `M-${this.config.ticklinelengthout / this.config.xscale},${tick} L${this.config.ticklinelengthin / this.config.xscale},${tick}`
 
-
+            if (! this.config.yhideticknumbers) 
+                this.addNumber(this.ynumbers, tick, xpostext, tick, 'ynumber')
         }
         if (this.config.ticklinelengthout != 0 || this.config.ticklinelengthin != 0) {
             const element = this.svg.getElementById("yticklines")
             element.setAttribute("d", path)
         }
-        if (this.config.yhideticknumbers) 
-            numbergroup.style.display = "none"
     }
 
     addNumber(element, number, x, y, classes) {
-        element.innerHTML += `<text class="${classes}" x="${x}" y="${y}" >${number}</text>`
+        element.innerHTML += `<text class="${classes}" x="${x}" y="${y}" >${number == parseInt(number) ? number : number.toFixed(2)}</text>`
+    }
+
+    createObservers() {
+        this.xobserver = new ResizeObserver(this.setSpaceBottom.bind(this))
+        this.xobserver.observe(this.xnumbers)
+        this.yobserver = new ResizeObserver(this.setSpaceLeft.bind(this))
+        this.yobserver.observe(this.ynumbers)
     }
 
     setSpaceBottom() {
@@ -502,10 +533,10 @@ class ChartSvg {
         let ylabelrect = this.yaxislabel.getBoundingClientRect()
         let xlabelrect = this.xaxislabel.getBoundingClientRect()
         let marginBottom = Math.max(
-            xnumbersrect.bottom-svgrect.bottom,
-            ynumbersrect.bottom-svgrect.bottom,
-            xlabelrect.bottom-svgrect.bottom,
-            ylabelrect.bottom-svgrect.bottom,
+            xnumbersrect.bottom - svgrect.bottom,
+            ynumbersrect.bottom - svgrect.bottom,
+            xlabelrect.bottom - svgrect.bottom,
+            ylabelrect.bottom - svgrect.bottom,
             0
         )
         this.container.style['margin-bottom'] = `${marginBottom}px`
@@ -518,27 +549,30 @@ class ChartSvg {
         let ylabelrect = this.yaxislabel.getBoundingClientRect()
         let xlabelrect = this.xaxislabel.getBoundingClientRect()
         let marginLeft = Math.max(
-            svgrect.left-xnumbersrect.left,
-            svgrect.left-ynumbersrect.left,
-            svgrect.left-ylabelrect.left,
-            svgrect.left-xlabelrect.left,
+            svgrect.left - xnumbersrect.left,
+            svgrect.left - ynumbersrect.left,
+            svgrect.left - ylabelrect.left,
+            svgrect.left - xlabelrect.left,
             0
         )
+        console.log(this.ynumbers, ynumbersrect)
         this.container.style['margin-left'] = `${marginLeft}px`
     }
 
     drawGrid() {
-        let dgrid = ""
+        let dgrid = ''
 
         if (! this.config.xhidegrid) {
-            for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xdelta) {
-                dgrid += ` M${i} ${this.config.ymin} L${i} ${this.config.ymax}`
+            dgrid += `M${this.config.xmin},${this.config.ymin} H${this.config.xmax} M${this.config.xmin},${this.config.ymax} H${this.config.xmax}`
+            for (let tick of this.xticks) {
+                dgrid += ` M${tick} ${this.config.ymin} L${tick} ${this.config.ymax}`
             }
         }
         
         if (! this.config.yhidegrid) {
-            for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ydelta) {
-                dgrid += ` M${this.config.xmin} ${i} L${this.config.xmax} ${i}`
+            dgrid += `M${this.config.xmin},${this.config.ymin} V${this.config.ymax} M${this.config.xmax},${this.config.ymin} V${this.config.ymax}`
+            for (let tick of this.yticks) {
+                dgrid += ` M${this.config.xmin} ${tick} L${this.config.xmax} ${tick}`
             }
         }
 
@@ -553,14 +587,14 @@ class ChartSvg {
         let dsubgrid = ''
 
         if (! this.config.xhidesubgrid) {
-            for (let i = this.config.xmin; i <= this.config.xmax; i += this.config.xsubdelta) {
-                dsubgrid += ` M${i} ${this.config.ymin} L${i} ${this.config.ymax}`
+            for (let tick of this.xsubticks) {
+                dsubgrid += ` M${tick} ${this.config.ymin} L${tick} ${this.config.ymax}`
             }
         }
 
         if (! this.config.yhidesubgrid) {
-            for (let i = this.config.ymin; i <= this.config.ymax; i += this.config.ysubdelta) {
-                dsubgrid += ` M${this.config.xmin} ${i} L${this.config.xmax} ${i}`
+            for (let tick of this.ysubticks) {
+                dsubgrid += ` M${this.config.xmin} ${tick} L${this.config.xmax} ${tick}`
             }
         }
 
