@@ -75,17 +75,18 @@ xyChartTemplate.innerHTML = `<style>
         height: calc(var(--hoehe) * 1cm);
         text-align: center;
     }
-    #xaxislabel {
+    #xaxislabel, #yaxislabel {
         position: absolute;
         text-align: right;
         line-height: 1;
-        width: calc(var(--breite) * 1cm);
-        top: calc(min(var(--xaxispos) * 1cm, var(--hoehe) * 1cm) + var(--grid-ticklinelengthout) * 1cm + var(--grid-tickgaplinenumber) * 1cm );
+    }
+    #xaxislabel {
+        right: 0;
+        top: calc(var(--xaxispos) * 1cm);
     }
     #yaxislabel {
-        position: absolute;
-        text-align: right;
-        right: calc( min(var(--breite)* 1cm + var(--yaxispos) * 1cm, var(--breite) * 1cm) + var(--grid-ticklinelengthout) * 1cm + var(--grid-tickgaplinenumber) * 1cm);
+        right: calc(var(--yaxispos) * 1cm);
+        top: 0;
     }
     #standardslot {
         position: absolute;
@@ -187,13 +188,13 @@ xyChartTemplate.innerHTML = `<style>
             </g>
             <g id="graphs" clip-path="url(#clipgraph)"></g>
         </svg>
+        <div id="xaxislabel"><slot name="xaxislabel">x</slot></div>
+        <div id="yaxislabel"><slot name="yaxislabel">y</slot></div>
         <div id="legend" part="legend">
             <slot name="legend-before" id="legend-before"></slot>
             <div id="legend-list"></div>
             <slot name="legend-after" id="legend-after"></slot>
         </div>
-        <div id="xaxislabel"><slot name="xaxislabel">x</slot></div>
-        <div id="yaxislabel"><slot name="yaxislabel">y</slot></div>
         <div style="position: absolute"><slot name="above"></slot></div>
         <slot></slot>
         <div id="error"></div>
@@ -215,7 +216,7 @@ class ChartSvg {
         this.graphgroup = element.getElementById("graphs")
 
         this.svg.setAttribute("preserveAspectRatio", 'none')
-        this.svg.setAttribute("viewBox", `${this.config.viewbox3}`)
+        this.svg.setAttribute("viewBox", `${this.config.viewbox}`)
         this.svg.setAttribute("width", `${this.config.totalwidth}cm`)
         this.svg.setAttribute("height", `${this.config.totalheight}cm`)
 
@@ -747,9 +748,7 @@ class ChartConfig {
         this.totalymin = this.ymin*this.yscale
         this.totalxmax = this.xmax*this.xscale
         this.totalymax = this.ymax*this.yscale
-        this.viewbox = `${this.totalxmin} -${this.totalymax} ${this.totalwidth} ${this.totalheight}`
-        this.viewbox2 = `${this.xmin} -${this.ymax} ${this.width} ${this.height}`
-        this.viewbox3 = `${this.xmin} ${this.ymin} ${this.width} ${this.height}`
+        this.viewbox = `${this.xmin} ${this.ymin} ${this.width} ${this.height}`
     }
 }
 
@@ -861,10 +860,8 @@ class XYGraphs extends HTMLElement {
     setCSSVariables() {
         this.style.setProperty('--breite', `${this.config.totalwidth}`)
         this.style.setProperty('--hoehe', `${this.config.totalheight}`)
-        this.style.setProperty('--xaxispos', `${this.config.totalymax}`)
-        this.style.setProperty('--yaxispos', `${this.config.totalxmin}`)
-        this.style.setProperty('--grid-ticklinelengthout', `${this.config.ticklinelengthout}`)
-        this.style.setProperty('--grid-tickgaplinenumber', `${this.config.tickgaplinenumber}`)
+        this.style.setProperty('--xaxispos', `${this.config.totalymax + this.config.tickgaplinenumber + this.config.ticklinelengthout}`)
+        this.style.setProperty('--yaxispos', `${this.config.totalwidth + this.config.totalxmin + this.config.tickgaplinenumber + this.config.ticklinelengthout}`)
         this.style.setProperty('--xscale', `${this.config.xscale}`)
         this.style.setProperty('--yscale', `${this.config.yscale}`)
     }
@@ -910,7 +907,7 @@ class XYGraphs extends HTMLElement {
     }
 
     setSVGAtrributes(svgelement) {
-        svgelement.setAttribute('viewBox', this.config.viewbox3)
+        svgelement.setAttribute('viewBox', this.config.viewbox)
         svgelement.setAttribute('width', `${this.config.totalwidth}cm`)
         svgelement.setAttribute('height', `${this.config.totalheight}cm`)
         svgelement.style.transform = `scale(1, -1)`
