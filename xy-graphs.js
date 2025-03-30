@@ -555,7 +555,6 @@ class ChartSvg {
             svgrect.left - xlabelrect.left,
             0
         )
-        console.log(this.ynumbers, ynumbersrect)
         this.container.style['margin-left'] = `${marginLeft}px`
     }
 
