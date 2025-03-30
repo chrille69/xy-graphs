@@ -85,7 +85,7 @@ xyChartTemplate.innerHTML = `<style>
     #yaxislabel {
         position: absolute;
         text-align: right;
-        right: calc( min(var(--breite)* 1cm - var(--yaxispos) * 1cm, var(--breite) * 1cm) + var(--grid-ticklinelengthout) * 1cm + var(--grid-tickgaplinenumber) * 1cm);
+        right: calc( min(var(--breite)* 1cm + var(--yaxispos) * 1cm, var(--breite) * 1cm) + var(--grid-ticklinelengthout) * 1cm + var(--grid-tickgaplinenumber) * 1cm);
     }
     #standardslot {
         position: absolute;
@@ -176,12 +176,12 @@ xyChartTemplate.innerHTML = `<style>
                 <path id="subgrid" part="subgrid" class="no-scaling-stroke subgrid"></path>
             </g>
             <g id="xaxis" class="xaxis">
-                <line id="xaxisline" part="xaxisline" class="no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
+                <line id="xaxisline" part="xaxisline" class="no-scaling-stroke rescale" marker-end="url(#fancyarrow)"></line>
                 <path id="xticklines" part="xticklines" class="ticklines no-scaling-stroke" />
                 <g id="xnumbers" class="xnumbers"/>
             </g>
             <g id="yaxis" class="yaxis">
-                <line id="yaxisline" part="yaxisline" class="no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
+                <line id="yaxisline" part="yaxisline" class="no-scaling-stroke rescale" marker-end="url(#fancyarrow)"></line>
                 <path id="yticklines" part="yticklines" class="ticklines no-scaling-stroke" />
                 <g id="ynumbers" class="ynumbers" />
             </g>
@@ -418,29 +418,23 @@ class ChartSvg {
     }
 
     drawXaxis() {
-        let y = 0;
-        if (this.config.ymin > 0) {
-            y = -this.config.ymin
-        }
         const element = this.svg.getElementById("xaxisline")
-        element.setAttribute("x1", this.config.xmin)
-        element.setAttribute("y1", y)
-        element.setAttribute("x2", this.config.xmax-10*this.linewidth)
-        element.setAttribute("y2", y)
+        element.setAttribute("x1", this.config.xmin )
+        element.setAttribute("y1", 0)
+        element.setAttribute("x2", this.config.xmax-10*this.linewidth / this.config.xscale )
+        element.setAttribute("y2", 0)
+        element.style.transform = `scale(1, ${this.config.xscale / this.config.yscale})`
         if (this.config.xhideaxis)
             element.style.display = 'none'
     }
 
     drawYaxis() {
-        let x = 0;
-        if (this.config.xmin > 0) {
-            x = this.config.xmin
-        }
         const element = this.svg.getElementById("yaxisline")
-        element.setAttribute("x1", x)
+        element.setAttribute("x1", 0)
         element.setAttribute("y1", this.config.ymin)
-        element.setAttribute("x2", x)
-        element.setAttribute("y2", this.config.ymax - 10*this.linewidth)
+        element.setAttribute("x2", 0)
+        element.setAttribute("y2", this.config.ymax - 10*this.linewidth / this.config.yscale)
+        element.style.transform = `scale(${this.config.yscale / this.config.xscale}, 1)`
         if (this.config.yhideaxis)
             element.style.display = 'none'
     }
