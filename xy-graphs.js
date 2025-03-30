@@ -205,15 +205,21 @@ xyChartTemplate.innerHTML = `<style>
 class ChartError extends Error {}
 
 class ChartSvg {
-    constructor(config, element) {
-        this.config = config
-        this.element = element
-        this.legend = element.getElementById("legend")
-        this.legendlist = element.getElementById("legend-list")
-        this.legendbefore = element.getElementById("legend-before")
-        this.legendafter = element.getElementById("legend-after")
-        this.svg = element.getElementById("svg")
-        this.graphgroup = element.getElementById("graphs")
+    constructor(parent) {
+        this.parent = parent
+        this.config = parent.config
+        this.element = parent.element
+        this.legend = this.element.getElementById("legend")
+        this.legendlist = this.element.getElementById("legend-list")
+        this.legendbefore = this.element.getElementById("legend-before")
+        this.legendafter = this.element.getElementById("legend-after")
+        this.graphgroup = this.element.getElementById("graphs")
+        this.svg = this.element.getElementById("svg")
+        this.xnumbers = this.element.getElementById("xnumbers")
+        this.ynumbers = this.element.getElementById("ynumbers")
+        this.xaxislabel = this.element.getElementById("xaxislabel")
+        this.yaxislabel = this.element.getElementById("yaxislabel")
+        this.container = this.element.getElementById("overlaycontainer")
 
         this.svg.setAttribute("preserveAspectRatio", 'none')
         this.svg.setAttribute("viewBox", `${this.config.viewbox}`)
@@ -443,7 +449,7 @@ class ChartSvg {
     drawXTicks() {
         const numbergroup = this.svg.getElementById("xnumbers")
         const container = this.element.getElementById("overlaycontainer")
-        const observer = new ResizeObserver(this.setSpaceBottom.bind(this, numbergroup, container))
+        const observer = new ResizeObserver(this.setSpaceBottom.bind(this))
         observer.observe(numbergroup)
         let path=""
         for (let i = this.config.xmin; i < this.config.xmax; i += this.config.xdelta) {
@@ -465,7 +471,7 @@ class ChartSvg {
     drawYTicks() {
         const numbergroup = this.svg.getElementById("ynumbers")
         const container = this.element.getElementById("overlaycontainer")
-        const observer = new ResizeObserver(this.setSpaceLeft.bind(this, numbergroup, container, this.element.getElementById("yaxislabel")))
+        const observer = new ResizeObserver(this.setSpaceLeft.bind(this))
         observer.observe(numbergroup)
         let path = ""
         for (let i = this.config.ymin; i < this.config.ymax; i += this.config.ydelta) {
@@ -489,17 +495,36 @@ class ChartSvg {
         element.innerHTML += `<text class="${classes}" x="${x}" y="${y}" >${number}</text>`
     }
 
-    setSpaceBottom(numbergroup, container) {
-        let rect = numbergroup.getBoundingClientRect()
+    setSpaceBottom() {
         let svgrect = this.svg.getBoundingClientRect()
-        container.style['margin-bottom'] = `max(${rect.bottom-svgrect.bottom}px, 0px)`
+        let ynumbersrect = this.ynumbers.getBoundingClientRect()
+        let xnumbersrect = this.xnumbers.getBoundingClientRect()
+        let ylabelrect = this.yaxislabel.getBoundingClientRect()
+        let xlabelrect = this.xaxislabel.getBoundingClientRect()
+        let marginBottom = Math.max(
+            xnumbersrect.bottom-svgrect.bottom,
+            ynumbersrect.bottom-svgrect.bottom,
+            xlabelrect.bottom-svgrect.bottom,
+            ylabelrect.bottom-svgrect.bottom,
+            0
+        )
+        this.container.style['margin-bottom'] = `${marginBottom}px`
     }
 
-    setSpaceLeft(numbergroup, container, label) {
-        let rect = numbergroup.getBoundingClientRect()
+    setSpaceLeft() {
         let svgrect = this.svg.getBoundingClientRect()
-        let labelrect = label.getBoundingClientRect()
-        container.style['margin-left'] = `max(${svgrect.left-rect.left}px, ${svgrect.left-labelrect.left}px, 0px)`
+        let ynumbersrect = this.ynumbers.getBoundingClientRect()
+        let xnumbersrect = this.xnumbers.getBoundingClientRect()
+        let ylabelrect = this.yaxislabel.getBoundingClientRect()
+        let xlabelrect = this.xaxislabel.getBoundingClientRect()
+        let marginLeft = Math.max(
+            svgrect.left-xnumbersrect.left,
+            svgrect.left-ynumbersrect.left,
+            svgrect.left-ylabelrect.left,
+            svgrect.left-xlabelrect.left,
+            0
+        )
+        this.container.style['margin-left'] = `${marginLeft}px`
     }
 
     drawGrid() {
@@ -548,13 +573,14 @@ class ChartSvg {
 }
 
 class ChartContainer {
-    constructor(config, element, errorfunc) {
-        this.config = config
-        this.element = element
+    constructor(parent, errorfunc) {
+        this.parent = parent
+        this.config = parent.config
+        this.element = parent.template
         this.errorfunc = errorfunc
         this.colorlist = ['blue','red','green','magenta','cyan','purple','orange']
 
-        this.chartsvg = new ChartSvg(this.config, this.element)
+        this.chartsvg = new ChartSvg(this)
         this.positionLegend()
     }
 
@@ -845,7 +871,7 @@ class XYGraphs extends HTMLElement {
         this.config = new ChartConfig(this.configobject)
 
         this.setCSSVariables()
-        const chartcontainer = new ChartContainer(this.config, this.template, (msg) => this.errormessage(msg))
+        const chartcontainer = new ChartContainer(this, (msg) => this.errormessage(msg))
         chartcontainer.appendGraphPaths(this.graphs)
         if (chartcontainer.chartsvg.hasEmptyLegendList()) {
             this.chartelement.style.setProperty('--legendvisibility', 'collapse')
