@@ -936,7 +936,9 @@ class XYGraphs extends HTMLElement {
         svgelement.setAttribute('viewBox', this.config.viewbox)
         svgelement.setAttribute('width', `${this.config.totalwidth}cm`)
         svgelement.setAttribute('height', `${this.config.totalheight}cm`)
-        svgelement.style.transform = `scale(1, -1)`
+        svgelement.style['transform'] = `scale(1, -1)`
+        svgelement.style['stroke'] = 'black'
+        svgelement.style['stroke-width'] = 'var(--pt)'
     }
 
     errormessage(msg) {
