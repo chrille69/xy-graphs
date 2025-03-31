@@ -42,11 +42,11 @@ Die Konfiguration erfolgt über:
 ### Wichtige Grid-Konfigurationsattribute (`grid-*`)
 Diese Attribute steuern das Erscheinungsbild des Diagramms:
 
-| Attribut                | Beschreibung                                                                 | Standardwert         | Beispiel              |
-|-------------------------|------------------------------------------------------------------------------|----------------------|-----------------------|
+| Attribut                | Beschreibung                                                                 | Standardwert        | Beispiel             |
+|-------------------------|------------------------------------------------------------------------------|---------------------|----------------------|
 | `grid-range`            | Bereich der Achsen: `'max'`, `'xmin xmax'`, oder `'xmin ymin xmax ymax'`     | `'0 0 10 10'`       | `'0 0 5 5'`          |
 | `grid-size`             | Größe des Diagramms in cm: `'xsize ysize'`                                   | `'1 1'`             | `'2 2'`              |
-| `grid-delta`            | Abstände der Haupt- und Subgitter: `'xdelta ydelta xsubdelta ysubdelta'`     | `'1 1 0.2 0.2'`    | `'2 2 0.5 0.5'`      |
+| `grid-delta`            | Abstände der Haupt- und Subgitter: `'xdelta ydelta xsubdelta ysubdelta'`     | `'1 1 0.2 0.2'`     | `'2 2 0.5 0.5'`      |
 | `grid-hidegrid`         | Sichtbarkeit von Gittern: `'xhide yhide xhidesub yhidesub'`                  | `'0 0 0 0'`         | `'1 0 1 0'`          |
 | `grid-hideaxis`         | Sichtbarkeit der Achsen: `'xhide yhide'`                                     | `'0 0'`             | `'0 1'`              |
 | `grid-hideticknumbers`  | Sichtbarkeit der Achsenbeschriftungen: `'xhide yhide'`                       | `'0 0'`             | `'1 0'`              |
@@ -54,17 +54,18 @@ Diese Attribute steuern das Erscheinungsbild des Diagramms:
 | `grid-legendposition`   | Position der Legende: `'t'`, `'b'`, `'l'`, `'r'`, `'tl'`, `'br'`, etc.       | `'tl'`              | `'br'`               |
 
 ### Graph-Konfigurationsattribute (`graph-*-<id>`)
-Diese Attribute definieren einzelne Graphen im Diagramm:
+Diese Attribute definieren einzelne Graphen im Diagramm. Jeder Graph muss mit einer id identifiziert werden, die mit einem
+ASCII-Buchstaben beginnen muss (z.B. `g1`):
 
-| Attribut          | Beschreibung                                              | Standardwert   | Beispiel                     |
-|-------------------|-----------------------------------------------------------|----------------|------------------------------|
-| `graph-values-<id>` | JSON-Array mit Punkten: `[[x1,y1], [x2,y2], ...]`        | `null`         | `'[[1,2], [2,4], [3,6]]'`  |
+| Attribut            | Beschreibung                                              | Standardwert   | Beispiel                   |
+|---------------------|-----------------------------------------------------------|----------------|----------------------------|
+| `graph-values-<id>` | JSON-Array mit Punkten: `[[x1,y1], [x2,y2], ...]`         | `null`         | `'[[1,2], [2,4], [3,6]]'`  |
 | `graph-expr-<id>`   | Mathematische Funktion (benötigt mathjs): `'f(x)'`        | `null`         | `'x^2'`                    |
-| `graph-start-<id>`  | Startwert für Funktion                            | `null` (xmin)  | `'0'`                      |
-| `graph-end-<id>`    | Endwert für Funktion                              | `null` (xmax)  | `'5'`                      |
-| `graph-step-<id>`   | Schrittweite für Funktion                         | `null` (xsubdelta) | `'0.1'`                |
-| `graph-symbol-<id>` | Symboltyp: `square`, `circle`, `cross`, etc.      | `'line'`       | `'circle'`                 |
-| `graph-name-<id>`   | Name in der Legende                               | `null`         | `'Quadratfunktion'`         |
+| `graph-start-<id>`  | Startwert für Funktion                                    | `null` (xmin)  | `'0'`                      |
+| `graph-end-<id>`    | Endwert für Funktion                                      | `null` (xmax)  | `'5'`                      |
+| `graph-step-<id>`   | Schrittweite für Funktion                                 | `null` (xsubdelta) | `'0.1'`                |
+| `graph-symbol-<id>` | Symboltyp: `square`, `circle`, `cross`, etc.              | `'line'`       | `'circle'`                 |
+| `graph-name-<id>`   | Name in der Legende                                       | `null`         | `'Quadratfunktion'`        |
 
 ### CSS-Variablen
 Die folgenden CSS-Variablen können für Styling verwendet werden. Hinweis: `--breite`, `--hoehe` und `--legendvisibility` werden von JavaScript dynamisch gesetzt und sollten nicht manuell überschrieben werden, es sei denn, dies ist explizit gewünscht.
@@ -142,7 +143,7 @@ Ein Diagramm mit benutzerdefiniertem Styling für Achsen und Graphen:
     <script src="xy-graphs.js"></script>
     <style>
         xy-graphs {
-            --graphg1-stroke: purple;
+            --g1-stroke: purple;
             --g1-width: 2pt;
         }
         xy-graphs::part(axis) {
