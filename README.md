@@ -44,7 +44,7 @@ Diese Attribute steuern das Erscheinungsbild des Diagramms:
 
 | Attribut                | Beschreibung                                                                 | Standardwert        | Beispiel             |
 |-------------------------|------------------------------------------------------------------------------|---------------------|----------------------|
-| `grid-range`            | Bereich der Achsen: `'max'`, `'xmin xmax'`, oder `'xmin ymin xmax ymax'`     | `'0 0 10 10'`       | `'0 0 5 5'`          |
+| `grid-range`            | Bereich der Achsen: `'max'`, `'xmin xmax'` oder `'xmin ymin xmax ymax'`      | `'0 0 10 10'`       | `'0 0 5 5'`          |
 | `grid-size`             | Größe des Diagramms in cm: `'xsize ysize'`                                   | `'1 1'`             | `'2 2'`              |
 | `grid-delta`            | Abstände der Haupt- und Subgitter: `'xdelta ydelta xsubdelta ysubdelta'`     | `'1 1 0.2 0.2'`     | `'2 2 0.5 0.5'`      |
 | `grid-hidegrid`         | Sichtbarkeit von Gittern: `'xhide yhide xhidesub yhidesub'`                  | `'0 0 0 0'`         | `'1 0 1 0'`          |
@@ -68,16 +68,13 @@ ASCII-Buchstaben beginnen muss (z.B. `g1`):
 | `graph-name-<id>`   | Name in der Legende                                       | `null`         | `'Quadratfunktion'`        |
 
 ### CSS-Variablen
-Die folgenden CSS-Variablen können für Styling verwendet werden. Hinweis: `--breite`, `--hoehe` und `--legendvisibility` werden von JavaScript dynamisch gesetzt und sollten nicht manuell überschrieben werden, es sei denn, dies ist explizit gewünscht.
+Die folgenden CSS-Variablen können für Styling verwendet werden.
 
-| Variable                | Beschreibung                          | Standardwert       | Hinweis                          |
-|-------------------------|---------------------------------------|--------------------|----------------------------------|
-| `--breite`              | Breite des Diagramms in cm            | Dynamisch          | Von JS gesetzt (via `grid-size`) |
-| `--hoehe`               | Höhe des Diagramms in cm              | Dynamisch          | Von JS gesetzt (via `grid-size`) |
-| `--legendvisibility`    | Sichtbarkeit der Legende              | `'visible'`        | Von JS gesetzt (via `graph-name-<id>`) |
-| `--graph<id>-stroke`    | Farbe des Graphen mit ID `<id>`       | `'black'`          | z.B. `--graphg1-stroke: blue;` |
+| Variable                | Beschreibung                          | Standardwert       | Hinweis                        |
+|-------------------------|---------------------------------------|--------------------|--------------------------------|
+| `--<id>-stroke`         | Farbe des Graphen mit ID `<id>`       | `'black'`          | z.B. `--g1-stroke: blue;` |
 | `--<id>-width`          | Linienbreite des Graphen              | `'1pt'`            | z.B. `--g1-width: 2pt;`        |
-| `--path`                | SVG-Pfad für benutzerdefinierte Symbole | `'m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3'` | Für Symbol `cross` anpassbar |
+| `--path`                | SVG-Pfad für benutzerdefinierte Symbole | `'m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3'` | Für Symbol `custompath` anpassbar |
 
 ### CSS `part`-Attribute
 Die Komponente exportiert spezifische Teile (via `part`-Attribut), die mit CSS gezielt gestylt werden können:
