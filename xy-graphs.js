@@ -314,7 +314,7 @@ class ChartSvg {
             use.setAttribute('href', `#symbol-${graphinfo.symbol}`)
             use.setAttribute('x', point.x)
             use.setAttribute('y', point.y)
-            use.setAttribute('part', `${graphinfo.id}`)
+            use.setAttribute('part', `graph-${graphinfo.id}`)
             if (!noscale) {
                 const scalegroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
                 scalegroup.appendChild(use)
@@ -346,7 +346,7 @@ class ChartSvg {
             dpath += ` L${point.x} ${point.y}`
         }
         path.setAttribute("d", dpath)
-        path.setAttribute('part', `${graphinfo.id}`)
+        path.setAttribute('part', `graph-${graphinfo.id}`)
         path.style['stroke'] = `var(--${graphinfo.id}-stroke, ${graphinfo.strokecolor})`
         path.style['stroke-width'] = `var(--${graphinfo.id}-width, 1.3pt)`
         path.style['fill'] = `var(--${graphinfo.id}-fill, none)`
@@ -416,7 +416,7 @@ class ChartSvg {
         const div = document.createElement('div')
         this.legendlist.appendChild(div)
         div.classList.add('legenditem')
-        div.setAttribute('part',`legenditem${info.id}`)
+        div.setAttribute('part',`legenditem-${info.id}`)
         const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
         symbolsvg.setAttribute('width', '0.5cm')
         symbolsvg.setAttribute('height', '0.5cm')

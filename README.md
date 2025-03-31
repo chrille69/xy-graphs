@@ -51,6 +51,8 @@ Diese Attribute steuern das Erscheinungsbild des Diagramms:
 | `grid-hideaxis`         | Sichtbarkeit der Achsen: `'xhide yhide'`                                     | `'0 0'`             | `'0 1'`              |
 | `grid-hideticknumbers`  | Sichtbarkeit der Achsenbeschriftungen: `'xhide yhide'`                       | `'0 0'`             | `'1 0'`              |
 | `grid-ticklinelength`   | Länge der Ticks (innen/außen): `'in out'`                                    | `'0.2 0.2'`         | `'0.3 0.1'`          |
+| `grid-tickgaplinenumber`| Abstand zwischen Tick und Nummer: `'length'`                                 | `'0.1'`             | `'0.3'`              |
+| `grid-legendpadding`    | Legendeinnenabstand: `'length length'`                                       | `'0.2 0.2'`         | `'0.5 0.5'`          |
 | `grid-legendposition`   | Position der Legende: `'t'`, `'b'`, `'l'`, `'r'`, `'tl'`, `'br'`, etc.       | `'tl'`              | `'br'`               |
 
 ### Graph-Konfigurationsattribute (`graph-*-<id>`)
@@ -68,26 +70,34 @@ ASCII-Buchstaben beginnen muss (z.B. `g1`):
 | `graph-name-<id>`   | Name in der Legende                                       | `null`         | `'Quadratfunktion'`        |
 
 ### CSS-Variablen
+Alle Grid-Attribute können auch als CSS-Variablen verwendet werden. Dazu legt man z.B. in einer CSS-Klasse oder im style-Attribut
+die Variable fest, z.B. `.myclass {--grid-hideaxis: 1 1}`.
+
 Die folgenden CSS-Variablen können für Styling verwendet werden.
 
 | Variable                | Beschreibung                          | Standardwert       | Hinweis                        |
 |-------------------------|---------------------------------------|--------------------|--------------------------------|
-| `--<id>-stroke`         | Farbe des Graphen mit ID `<id>`       | `'black'`          | z.B. `--g1-stroke: blue;` |
+| `--tick-font-size-pt`   | Fontgröße der Ticks in pt             | `12`               | z.B. `---tick-font-size-pt: 10;` |
+| `--<id>-stroke`         | Linienfarbe des Graphen mit ID `<id>` | `'black'`          | z.B. `--g1-stroke: blue;` |
+| `--<id>-fill`           | Füllfarbe des Graphen mit ID `<id>`   | `'none'`          | z.B. `--g1-fill: red;` |
 | `--<id>-width`          | Linienbreite des Graphen              | `'1pt'`            | z.B. `--g1-width: 2pt;`        |
 | `--path`                | SVG-Pfad für benutzerdefinierte Symbole | `'m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3'` | Für Symbol `custompath` anpassbar |
 
 ### CSS `part`-Attribute
 Die Komponente exportiert spezifische Teile (via `part`-Attribut), die mit CSS gezielt gestylt werden können:
 
-| `part`-Wert      | Beschreibung                             | Beispiel Styling                   |
-|------------------|------------------------------------------|------------------------------------|
-| `grid`           | Das Hauptgitter (Hauptlinien)            | `xy-graphs::part(grid) { stroke: gray; }` |
-| `subgrid`        | Das Subgitter (feinere Linien)           | `xy-graphs::part(subgrid) { stroke: lightgray; }` |
-| `axis`           | Die Achsen (x- und y-Achse)              | `xy-graphs::part(axis) { stroke-width: 2pt; }` |
-| `ticks`          | Die Tick-Markierungen an den Achsen      | `xy-graphs::part(ticks) { stroke: black; }` |
-| `ticknumbers`    | Die Zahlen an den Achsen                 | `xy-graphs::part(ticknumbers) { font-size: 12pt; }` |
-| `legend`         | Der Legendenbereich                      | `xy-graphs::part(legend) { background: #f0f0f0; }` |
-| `graph-<id>`     | Ein bestimmter Graph (z.B. `graph-g1`)   | `xy-graphs::part(graph-g1) { stroke: red; }` |
+| `part`-Wert       | Beschreibung                             | Beispiel Styling                   |
+|-------------------|------------------------------------------|------------------------------------|
+| `chart`           | Das Diagramm                             | `xy-graphs::part(chart) { background-color: yellow; }` |
+| `grid`            | Das Hauptgitter (Hauptlinien)            | `xy-graphs::part(grid) { stroke: gray; }` |
+| `subgrid`         | Das Subgitter (feinere Linien)           | `xy-graphs::part(subgrid) { stroke: lightgray; }` |
+| `xaxisline`       | Die x-Achse                              | `xy-graphs::part(xaxisline) { stroke-width: 2pt; }` |
+| `xticklines`      | Die Tick-Markierungen an der x-Achse     | `xy-graphs::part(xticklines) { stroke: black; }` |
+| `yaxisline`       | Die y-Achse                              | `xy-graphs::part(xaxisline) { stroke-width: 2pt; }` |
+| `yticklines`      | Die Tick-Markierungen an der y-Achse     | `xy-graphs::part(xticklines) { stroke: black; }` |
+| `legend`          | Der Legendenbereich                      | `xy-graphs::part(legend) { background: #f0f0f0; }` |
+| `graph-<id>`      | Ein bestimmter Graph (z.B. `graph-g1`)   | `xy-graphs::part(graph-g1) { stroke: red; }` |
+| `legenditem-<id>` | Legende-Eintrag eines Graphen (z.B. `legenditem-g1`)   | `xy-graphs::part(legenditem-g1) { padding: 10px 0px; }` |
 
 ## Beispiele
 
