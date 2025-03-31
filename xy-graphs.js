@@ -314,7 +314,7 @@ class ChartSvg {
             use.setAttribute('href', `#symbol-${graphinfo.symbol}`)
             use.setAttribute('x', point.x)
             use.setAttribute('y', point.y)
-            use.setAttribute('part', `graph${graphinfo.id}`)
+            use.setAttribute('part', `${graphinfo.id}`)
             if (!noscale) {
                 const scalegroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
                 scalegroup.appendChild(use)
@@ -346,8 +346,8 @@ class ChartSvg {
             dpath += ` L${point.x} ${point.y}`
         }
         path.setAttribute("d", dpath)
-        path.setAttribute('part', `graph${graphinfo.id}`)
-        path.style['stroke'] = `var(--graph${graphinfo.id}-stroke, ${graphinfo.strokecolor})`
+        path.setAttribute('part', `${graphinfo.id}`)
+        path.style['stroke'] = `var(--${graphinfo.id}-stroke, ${graphinfo.strokecolor})`
         path.style['stroke-width'] = `var(--${graphinfo.id}-width, 1.3pt)`
         path.style['fill'] = `var(--${graphinfo.id}-fill, none)`
         path.style['vector-effect'] = "non-scaling-stroke"
@@ -890,6 +890,7 @@ class XYGraphs extends HTMLElement {
 
         this.gridkeys = Object.keys(this.configobject)
         this.graphkeys = Object.keys(this.emptygraph)
+        this.regraphid = /^[a-z]/i
 
         this.graphs = {}
         for (let attr of this.attributes) {
@@ -945,19 +946,23 @@ class XYGraphs extends HTMLElement {
         if (attrinfo.length != 3)
             throw new ChartError(`${attr.name}: Falsches Format. graph-[eigenschaft]-[id] gefordert.`)
 
-        if (attrinfo[1] == '')
-            throw new ChartError(`${attr.name}: Falsches Format. graph-[eigenschaft]-[id] ist gefordert.`)
-        
-        if (attrinfo[2] == '')
-            throw new ChartError(`${attr.name}: Falsches Format. id nicht angegeben.`)
-
         const graphid = attrinfo[2]
         const graphprop = attrinfo[1]
+
+        if (graphprop == '')
+            throw new ChartError(`${attr.name}: Falsches Format. graph-[eigenschaft]-[id] ist gefordert.`)
+        
+        if (graphid == '')
+            throw new ChartError(`${attr.name}: Falsches Format. id nicht angegeben.`)
+
         if (! this.graphkeys.includes(graphprop))
             throw new ChartError(`${attr.name}: ${graphprop} unbekannt. Erlaubt sind nur ${this.graphkeys.join(', ')}`)
 
         if (graphprop == 'symbol' && ! this.symbols.includes(attr.value))
             throw new ChartError(`${attr.name}: ${attr.value} unbekannt. Erlaubt sind nur ${this.symbols.join(', ')}`)
+
+        if (! this.regraphid.exec(graphid))
+            throw new ChartError(`${attr.name}: ${graphid} muss mit einem ASCII-Buchstaben beginnen`)
 
         if (!(graphid in this.graphs))
             this.graphs[graphid] = {...this.emptygraph, id: graphid, order: this.graphorder++ }
