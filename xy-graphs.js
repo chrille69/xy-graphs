@@ -143,6 +143,11 @@ xyChartTemplate.innerHTML = `<style>
         text-anchor: end;
         dominant-baseline: central;
     }
+    #graphs .usewrapper {
+        transform: scale(var(--xrescale, 1), var(--yrescale,1));
+        transform-box: content-box;
+        transform-origin: center;
+    }
 </style>
 <div>
     <div id="charterrorname"></div>
@@ -177,12 +182,12 @@ xyChartTemplate.innerHTML = `<style>
                 <path id="subgrid" part="subgrid" class="no-scaling-stroke subgrid"></path>
             </g>
             <g id="xaxis" class="xaxis">
-                <line id="xaxisline" part="xaxisline" class="no-scaling-stroke rescale" marker-end="url(#fancyarrow)"></line>
+                <line id="xaxisline" part="xaxisline" class="no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
                 <path id="xticklines" part="xticklines" class="ticklines no-scaling-stroke" />
                 <g id="xnumbers" class="xnumbers"/>
             </g>
             <g id="yaxis" class="yaxis">
-                <line id="yaxisline" part="yaxisline" class="no-scaling-stroke rescale" marker-end="url(#fancyarrow)"></line>
+                <line id="yaxisline" part="yaxisline" class="no-scaling-stroke" marker-end="url(#fancyarrow)"></line>
                 <path id="yticklines" part="yticklines" class="ticklines no-scaling-stroke" />
                 <g id="ynumbers" class="ynumbers" />
             </g>
@@ -203,6 +208,180 @@ xyChartTemplate.innerHTML = `<style>
 
 
 class ChartError extends Error {}
+
+
+class ChartGraph {
+    constructor(graphparameter, min, max, step) {
+        Object.assign(this, graphparameter)
+        if (this.start === null)
+            this.start = min
+        if (this.end === null)
+            this.end = max
+        if (this.step === null)
+            this.step = step
+
+        this.legenditemelement = this.createLegenditemElement()
+
+        this.exprelement = null
+        this.valueselement = null
+        if (this.values !== null) {
+            let values
+            try {
+                values = JSON.parse(this.values)
+            } catch (error) {
+                throw new ChartError(error.message)
+            }
+            this.valueselement = this.createGraphElement(values, 'values')
+        }
+        if (this.expr !== null) {
+            const values = this.createValuesFromFunction()
+            this.exprelement = this.createGraphElement(values, 'expr')
+        }
+    }
+
+    createGraphElement(values, classname) {
+        if (this.symbol == 'line')
+            return this.createPathElement(values, classname)
+        else {
+            return this.createSymbolGroup(values, classname)
+        }
+    }
+
+    createSymbolGroup(values, classname) {
+        if (! Array.isArray(values))
+            throw new ChartError(`values muss ein zweidimensionales Array sein.`)
+
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g")
+        for (let i=0; i<values.length; i++) {
+            const point = this.tupelToPoint(values[i])
+            const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
+            use.setAttribute('href', `#symbol-${this.symbol}`)
+            use.setAttribute('x', point.x)
+            use.setAttribute('y', point.y)
+            use.setAttribute('part', `graph-${this.id}`)
+            const scalegroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
+            scalegroup.classList.add('usewrapper')
+            scalegroup.appendChild(use)
+            group.appendChild(scalegroup)
+            group.appendChild(scalegroup)
+        }
+        group.style['stroke'] = this.strokecolor
+        group.style['stroke-width'] = '1.3pt'
+        group.style['fill'] = "none"
+        group.classList.add(classname)
+
+        return group
+    }
+
+    createPathElement(values, classname) {
+        if (! Array.isArray(values))
+            throw new ChartError(`values muss ein zweidimensionales Array sein.`)
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
+        let point = this.tupelToPoint(values[0])
+        let dpath = `M${point.x} ${point.y}`
+        for (let i=1; i < values.length; i++) {
+            point = this.tupelToPoint(values[i])
+            dpath += ` L${point.x} ${point.y}`
+        }
+        path.setAttribute("d", dpath)
+        path.setAttribute('part', `graph-${this.id}`)
+        path.style['stroke'] = `var(--graph-${this.id}-stroke, ${this.strokecolor})`
+        path.style['stroke-width'] = `var(--graph-${this.id}-width, 1.3pt)`
+        path.style['fill'] = `var(--graph-${this.id}-fill, none)`
+        path.style['vector-effect'] = "non-scaling-stroke"
+        path.classList.add(classname)
+
+        return path
+    }
+
+    createValuesFromFunction() {
+        let start, end, step, tupel = []
+
+        if (this.expr === null)
+            return []
+        
+        if (typeof math === 'undefined') {
+            throw new ChartError('Für Funktionen benötigt xy-graphs die Javascript-Bibliothek <a href="https://mathjs.org/">mathjs</a>')
+        }
+
+        start = parseFloat(this.start)
+        if (isNaN(start))
+            throw new ChartError(`start ${this.start} ist keine Zahl.`)
+
+        end = parseFloat(this.end)
+        if (isNaN(end))
+            throw new ChartError(`end ${this.end} ist keine Zahl.`)
+
+        step = parseFloat(this.step)
+        if (isNaN(step))
+            throw new ChartError(`step ${this.step} ist keine Zahl.`)
+
+        if (step == 0)
+            throw new ChartError(`step darf nicht null sein.`)
+        if (step > 0 && start > end)
+            throw new ChartError(`step > 0 aber end < start.`)
+        if (step < 0 && start < end)
+            throw new ChartError(`step < 0 aber end > start.`)
+        if (start == end)
+            throw new ChartError(`start = end ist unsinnig.`)
+        
+        const values = []
+        for (let i = start; i < end && start <= end || i > end && start >= end; i += step) {
+            try {
+                tupel = [i, math.evaluate(this.expr, { 'x': i })]
+                if (tupel[1] == Infinity)
+                    throw new ChartError(`Bis zur Unendlichkeit und noch viel weiter...`)
+                values.push(tupel)
+            }
+            catch(err) {
+                throw new ChartError(err.message)
+            }
+        }
+
+        // Der obere Wert wird aufgrund möglicher Fließkommazahlenfehlern extra berechnet
+        tupel = [end, math.evaluate(this.expr, { 'x': end })]
+        if (tupel[1] == Infinity)
+            throw new ChartError(`Bis zur Unendlichkeit und noch viel weiter...`)
+        values.push(tupel)
+        
+        return values
+    }
+
+    createLegenditemElement() {
+        const div = document.createElement('div')
+        div.classList.add('legenditem')
+        div.setAttribute('part',`legenditem-${this.id}`)
+        const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+        symbolsvg.setAttribute('width', '0.5cm')
+        symbolsvg.setAttribute('height', '0.5cm')
+        symbolsvg.setAttribute('viewBox', `-0.25 -0.25 .5 .5`)
+
+        div.appendChild(symbolsvg)
+        const element = this.createSymbolGroup([[0,0]])
+        symbolsvg.appendChild(element)
+        div.innerHTML += `<div>${this.name ? this.name : (this.expr ? this.expr : this.id)}</div>`
+
+        return div
+    }
+
+    tupelToPoint(tupel) {
+        if (! Array.isArray(tupel) || tupel.length < 2)
+            throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
+
+        let x = parseFloat(tupel[0])
+        if (isNaN(x))
+            throw new ChartError(`${tupel[0]} ist keine Zahl.`)
+
+        let y = parseFloat(tupel[1])
+        if (isNaN(y))
+            throw new ChartError(`${tupel[1]} ist keine Zahl.`)
+
+        return {x: x, y: y}
+    }
+
+}
+
 
 class ChartSvg {
     constructor(parent) {
@@ -255,177 +434,15 @@ class ChartSvg {
 
     }
 
-    tupelToPoint(tupel) {
-        if (! Array.isArray(tupel) || tupel.length < 2)
-            throw new ChartError(`${tupel} muss ein Array mit einer Länge von mindestens 2 sein.`)
-
-        let x = parseFloat(tupel[0])
-        if (isNaN(x))
-            throw new ChartError(`${tupel[0]} ist keine Zahl.`)
-
-        let y = parseFloat(tupel[1])
-        if (isNaN(y))
-            throw new ChartError(`${tupel[1]} ist keine Zahl.`)
-
-        return {x: x, y: y}
+    appendGraph(graph) {
+        if (graph.exprelement)
+            this.graphgroup.appendChild(graph.exprelement)
+        if (graph.valueselement)
+            this.graphgroup.appendChild(graph.valueselement)
     }
 
-    appendGraph(graphinfo) {
-        const elements = []
-
-        if (graphinfo['values'] !== null) {
-            let values
-            try {
-                values = JSON.parse(graphinfo.values)
-            } catch (error) {
-                throw new ChartError(error.message)
-            }
-            elements[0] = this.createGraphElement(values, graphinfo)
-        }
-        if (graphinfo['expr'] !== null) {
-            const values = this.createValuesFromFunction(graphinfo)
-            elements[1] = this.createGraphElement(values, graphinfo)
-        }
-
-        for (let element of elements) {
-            if (! element)
-                continue
-            this.graphgroup.appendChild(element)
-        }
-    }
-
-    createGraphElement(values, graphinfo) {
-        if (graphinfo.symbol == 'line')
-            return this.createPathElement(values, graphinfo)
-        else {
-            return this.createSymbolGroup(values, graphinfo)
-        }
-    }
-
-    createSymbolGroup(values, graphinfo, noscale=false) {
-
-        if (! Array.isArray(values))
-            throw new ChartError(`values muss ein zweidimensionales Array sein.`)
-
-        const group = document.createElementNS("http://www.w3.org/2000/svg", "g")
-        for (let i=0; i<values.length; i++) {
-            const point = this.tupelToPoint(values[i])
-            const use = document.createElementNS("http://www.w3.org/2000/svg", "use")
-            use.setAttribute('href', `#symbol-${graphinfo.symbol}`)
-            use.setAttribute('x', point.x)
-            use.setAttribute('y', point.y)
-            use.setAttribute('part', `graph-${graphinfo.id}`)
-            if (!noscale) {
-                const scalegroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
-                scalegroup.appendChild(use)
-                scalegroup.style['transform'] = `scale(${1/this.config.xscale}, ${-1/this.config.yscale})`
-                scalegroup.style['transform-box'] = 'content-box'
-                group.appendChild(scalegroup)
-            }
-            else {
-                group.appendChild(use)
-            }
-        }
-        group.style['stroke'] = graphinfo.strokecolor
-        group.style['stroke-width'] = '1.3pt'
-        group.style['fill'] = "none"
-
-        return group
-    }
-
-    createPathElement(values, graphinfo) {
-
-        if (! Array.isArray(values))
-            throw new ChartError(`values muss ein zweidimensionales Array sein.`)
-
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
-        let point = this.tupelToPoint(values[0])
-        let dpath = `M${point.x} ${point.y}`
-        for (let i=1; i<values.length; i++) {
-            point = this.tupelToPoint(values[i])
-            dpath += ` L${point.x} ${point.y}`
-        }
-        path.setAttribute("d", dpath)
-        path.setAttribute('part', `graph-${graphinfo.id}`)
-        path.style['stroke'] = `var(--graph-${graphinfo.id}-stroke, ${graphinfo.strokecolor})`
-        path.style['stroke-width'] = `var(--graph-${graphinfo.id}-width, 1.3pt)`
-        path.style['fill'] = `var(--graph-${graphinfo.id}-fill, none)`
-        path.style['vector-effect'] = "non-scaling-stroke"
-        return path
-    }
-
-    createValuesFromFunction(graphinfo) {
-        if (graphinfo['expr'] === null)
-            return []
-        
-        if (typeof math === 'undefined') {
-            throw new ChartError('Für Funktionen benötigt xy-graphs die Javascript-Bibliothek <a href="https://mathjs.org/">mathjs</a>')
-        }
-        let start, end, step, tupel = []
-        if (graphinfo.start === null)
-            graphinfo.start = this.config.xmin
-        start = parseFloat(graphinfo.start)
-        if (isNaN(start))
-            throw new ChartError(`start ${graphinfo.start} ist keine Zahl.`)
-
-        if (graphinfo.end === null)
-            graphinfo.end = this.config.xmax
-        end = parseFloat(graphinfo.end)
-        if (isNaN(end))
-            throw new ChartError(`end ${graphinfo.end} ist keine Zahl.`)
-
-        if (graphinfo.step === null)
-            graphinfo.step = this.config.xsubdelta
-        step = parseFloat(graphinfo.step)
-        if (isNaN(step))
-            throw new ChartError(`step ${graphinfo.step} ist keine Zahl.`)
-
-        if (step == 0)
-            throw new ChartError(`step darf nicht null sein.`)
-        if (step > 0 && start > end)
-            throw new ChartError(`step > 0 aber end < start.`)
-        if (step < 0 && start < end)
-            throw new ChartError(`step < 0 aber end > start.`)
-
-        if (start == end)
-            throw new ChartError(`start = end ist unsinnig.`)
-        
-        const values = []
-        for (let i = start; i < end && start <= end || i > end && start >= end; i += step) {
-            try {
-                tupel = [i, math.evaluate(graphinfo.expr, { 'x': i })]
-                if (tupel[1] == Infinity)
-                    throw new ChartError(`Bis zur Unendlichkeit und noch viel weiter...`)
-                values.push(tupel)
-            }
-            catch(err) {
-                throw new ChartError(err.message)
-            }
-        }
-
-        // Der obere Wert wird aufgrund möglicher Fließkommazahlenfehlern extra berechnet
-        tupel = [end, math.evaluate(graphinfo.expr, { 'x': end })]
-        if (tupel[1] == Infinity)
-            throw new ChartError(`Bis zur Unendlichkeit und noch viel weiter...`)
-        values.push(tupel)
-        
-        return values
-    }
-
-    appendLegendItem(info) {
-        const div = document.createElement('div')
-        this.legendlist.appendChild(div)
-        div.classList.add('legenditem')
-        div.setAttribute('part',`legenditem-${info.id}`)
-        const symbolsvg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
-        symbolsvg.setAttribute('width', '0.5cm')
-        symbolsvg.setAttribute('height', '0.5cm')
-        symbolsvg.setAttribute('viewBox', `-0.25 -0.25 .5 .5`)
-
-        div.appendChild(symbolsvg)
-        const element = this.createSymbolGroup([[0,0]], info, true)
-        symbolsvg.appendChild(element)
-        div.innerHTML += `<div>${info.name ? info.name : (info.expr ? info.expr : info.id)}</div>`
+    appendLegendItem(element) {
+        this.legendlist.appendChild(element)
     }
 
     hasEmptyLegendList() {
@@ -520,9 +537,9 @@ class ChartSvg {
     }
 
     createObservers() {
-        this.xobserver = new ResizeObserver(this.setSpaceBottom.bind(this))
+        this.xobserver = new ResizeObserver(() => this.setSpaceBottom())
         this.xobserver.observe(this.xnumbers)
-        this.yobserver = new ResizeObserver(this.setSpaceLeft.bind(this))
+        this.yobserver = new ResizeObserver(() => this.setSpaceLeft())
         this.yobserver.observe(this.ynumbers)
     }
 
@@ -605,6 +622,7 @@ class ChartSvg {
     }
 }
 
+
 class ChartContainer {
     constructor(parent, errorfunc) {
         this.parent = parent
@@ -618,16 +636,17 @@ class ChartContainer {
     }
 
     appendGraphPaths(graphs) {
-        for (let graph of Object.values(graphs).sort((a,b) => a.order - b.order)) {
+        for (let graphparams of Object.values(graphs).sort((a,b) => a.order - b.order)) {
             try {
-                graph.strokecolor = this.colorlist.length > 0 ? this.colorlist.shift() : 'black'
-                if (! graphs['nolegend'])
-                    this.chartsvg.appendLegendItem(graph)
+                graphparams.strokecolor = this.colorlist.length > 0 ? this.colorlist.shift() : 'black'
+                const graph = new ChartGraph(graphparams, this.config.xmin, this.config.xmax, this.config.xsubdelta)
+                if (! graph.nolegend)
+                    this.chartsvg.appendLegendItem(graph.legenditemelement)
                 this.chartsvg.appendGraph(graph)
             }
             catch(err) {
                 if (err instanceof ChartError) 
-                    this.errorfunc(`graph (id=${graph.id}): ${err.message}`)
+                    this.errorfunc(`graph (id=${graphparams.id}): ${err.message}`)
                 else
                     throw err
             }
@@ -687,6 +706,7 @@ class ChartContainer {
         }
     }
 }
+
 
 class ChartConfig {
     constructor(configobject) {
@@ -827,6 +847,7 @@ function slotChanged(event, element) {
     }
 }
 
+
 class XYGraphs extends HTMLElement {
 
     connectedCallback() {
@@ -890,7 +911,6 @@ class XYGraphs extends HTMLElement {
 
         this.gridkeys = Object.keys(this.configobject)
         this.graphkeys = Object.keys(this.emptygraph)
-        this.regraphid = /^[a-z]/i
 
         this.graphs = {}
         for (let attr of this.attributes) {
@@ -924,6 +944,8 @@ class XYGraphs extends HTMLElement {
         this.style.setProperty('--yaxispos', `${this.config.totalwidth + this.config.totalxmin + this.config.tickgaplinenumber + this.config.ticklinelengthout}`)
         this.style.setProperty('--xscale', `${this.config.xscale}`)
         this.style.setProperty('--yscale', `${this.config.yscale}`)
+        this.style.setProperty('--xrescale', `${1 / this.config.xscale}`)
+        this.style.setProperty('--yrescale', `${1 / this.config.yscale}`)
     }
 
     parseGridAttribute(attr) {
