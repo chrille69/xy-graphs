@@ -75,12 +75,12 @@ die Variable fest, z.B. `.myclass {--grid-hideaxis: 1 1}`.
 
 Die folgenden CSS-Variablen können für Styling verwendet werden.
 
-| Variable                | Beschreibung                          | Standardwert       | Hinweis                        |
-|-------------------------|---------------------------------------|--------------------|--------------------------------|
+| Variable                | Beschreibung                          | Standardwert       | Hinweis                          |
+|-------------------------|---------------------------------------|--------------------|----------------------------------|
 | `--tick-font-size-pt`   | Fontgröße der Ticks in pt             | `12`               | z.B. `---tick-font-size-pt: 10;` |
-| `--<id>-stroke`         | Linienfarbe des Graphen mit ID `<id>` | `'black'`          | z.B. `--g1-stroke: blue;` |
-| `--<id>-fill`           | Füllfarbe des Graphen mit ID `<id>`   | `'none'`          | z.B. `--g1-fill: red;` |
-| `--<id>-width`          | Linienbreite des Graphen              | `'1pt'`            | z.B. `--g1-width: 2pt;`        |
+| `--graph-<id>-stroke`   | Linienfarbe des Graphen mit ID `<id>` | `'black'`          | z.B. `--g1-stroke: blue;`        |
+| `--graph-<id>-fill`     | Füllfarbe des Graphen mit ID `<id>`   | `'none'`           | z.B. `--g1-fill: red;`           |
+| `--graph-<id>-width`    | Linienbreite des Graphen              | `'1pt'`            | z.B. `--g1-width: 2pt;`          |
 | `--path`                | SVG-Pfad für benutzerdefinierte Symbole | `'m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3'` | Für Symbol `custompath` anpassbar |
 
 ### CSS `part`-Attribute
@@ -150,8 +150,8 @@ Ein Diagramm mit benutzerdefiniertem Styling für Achsen und Graphen:
     <script src="xy-graphs.js"></script>
     <style>
         xy-graphs {
-            --g1-stroke: purple;
-            --g1-width: 2pt;
+            --graph-g1-stroke: purple;
+            --graph-g1-width: 2pt;
         }
         xy-graphs::part(axis) {
             stroke: blue;
