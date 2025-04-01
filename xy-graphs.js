@@ -347,9 +347,9 @@ class ChartSvg {
         }
         path.setAttribute("d", dpath)
         path.setAttribute('part', `graph-${graphinfo.id}`)
-        path.style['stroke'] = `var(--${graphinfo.id}-stroke, ${graphinfo.strokecolor})`
-        path.style['stroke-width'] = `var(--${graphinfo.id}-width, 1.3pt)`
-        path.style['fill'] = `var(--${graphinfo.id}-fill, none)`
+        path.style['stroke'] = `var(--graph-${graphinfo.id}-stroke, ${graphinfo.strokecolor})`
+        path.style['stroke-width'] = `var(--graph-${graphinfo.id}-width, 1.3pt)`
+        path.style['fill'] = `var(--graph-${graphinfo.id}-fill, none)`
         path.style['vector-effect'] = "non-scaling-stroke"
         return path
     }
@@ -960,9 +960,6 @@ class XYGraphs extends HTMLElement {
 
         if (graphprop == 'symbol' && ! this.symbols.includes(attr.value))
             throw new ChartError(`${attr.name}: ${attr.value} unbekannt. Erlaubt sind nur ${this.symbols.join(', ')}`)
-
-        if (! this.regraphid.exec(graphid))
-            throw new ChartError(`${attr.name}: ${graphid} muss mit einem ASCII-Buchstaben beginnen`)
 
         if (!(graphid in this.graphs))
             this.graphs[graphid] = {...this.emptygraph, id: graphid, order: this.graphorder++ }
