@@ -42,32 +42,32 @@ Die Konfiguration erfolgt über:
 ### Wichtige Grid-Konfigurationsattribute (`grid-*`)
 Diese Attribute steuern das Erscheinungsbild des Diagramms:
 
-| Attribut                | Beschreibung                                                                 | Standardwert        | Beispiel             |
-|-------------------------|------------------------------------------------------------------------------|---------------------|----------------------|
-| `grid-range`            | Bereich der Achsen: `'max'`, `'xmin xmax'` oder `'xmin ymin xmax ymax'`      | `'0 0 10 10'`       | `'0 0 5 5'`          |
-| `grid-size`             | Größe des Diagramms in cm: `'xsize ysize'`                                   | `'1 1'`             | `'2 2'`              |
-| `grid-delta`            | Abstände der Haupt- und Subgitter: `'xdelta ydelta xsubdelta ysubdelta'`     | `'1 1 0.2 0.2'`     | `'2 2 0.5 0.5'`      |
-| `grid-hidegrid`         | Sichtbarkeit von Gittern: `'xhide yhide xhidesub yhidesub'`                  | `'0 0 0 0'`         | `'1 0 1 0'`          |
-| `grid-hideaxis`         | Sichtbarkeit der Achsen: `'xhide yhide'`                                     | `'0 0'`             | `'0 1'`              |
-| `grid-hideticknumbers`  | Sichtbarkeit der Achsenbeschriftungen: `'xhide yhide'`                       | `'0 0'`             | `'1 0'`              |
-| `grid-ticklinelength`   | Länge der Ticks (innen/außen): `'in out'`                                    | `'0.2 0.2'`         | `'0.3 0.1'`          |
-| `grid-tickgaplinenumber`| Abstand zwischen Tick und Nummer: `'length'`                                 | `'0.1'`             | `'0.3'`              |
-| `grid-legendpadding`    | Legendeinnenabstand: `'length length'`                                       | `'0.2 0.2'`         | `'0.5 0.5'`          |
-| `grid-legendposition`   | Position der Legende: `'t'`, `'b'`, `'l'`, `'r'`, `'tl'`, `'br'`, etc.       | `'tl'`              | `'br'`               |
+| Attribut                | Beschreibung                                                                 | Standardwert        | Beispiel                       |
+|-------------------------|------------------------------------------------------------------------------|---------------------|--------------------------------|
+| `grid-range`            | Bereich der Achsen: `'max'`, `'xmax ymax'` oder `'xmin ymin xmax ymax'`      | `'0 0 10 10'`       | `'0 0 5 5'`                    |
+| `grid-size`             | Größe des Diagramms in cm: `'xsize ysize'`                                   | `'1 1'`             | `'2 2'`                        |
+| `grid-delta`            | Abstände der Haupt- und Subgitter: `'delta subdelta'` oder`'xdelta ydelta xsubdelta ysubdelta'` | `'1 1 0.2 0.2'` | `'2 2 0.5 0.5'` |
+| `grid-hidegrid`         | Sichtbarkeit von Gittern: `'hideall'`, `'hide hidesub'` oder `'xhide yhide xhidesub yhidesub'`  | `'0 0 0 0'`     | `'1 0 1 0'`     |
+| `grid-hideaxis`         | Sichtbarkeit der Achsen: `'hide'`, `'xhide yhide'`                           | `'0 0'`             | `'0 1'`                        |
+| `grid-hideticknumbers`  | Sichtbarkeit der Achsenbeschriftungen: `'hide'`, `'xhide yhide'`             | `'0 0'`             | `'1 0'`                        |
+| `grid-ticklinelength`   | Länge der Ticks (innen/außen): `'length'`, `'lengthin lengthout'`            | `'0.2 0.2'`         | `'0.3 0.1'`                    |
+| `grid-tickgaplinenumber`| Abstand zwischen Tick und Nummer: `'length'`                                 | `'0.1'`             | `'0.3'`                        |
+| `grid-legendpadding`    | Legendeinnenabstand: `'length'`, `'xlength ylength'`                         | `'0.2 0.2'`         | `'0.5 0.5'`                    |
+| `grid-legendposition`   | Position der Legende: `'t'`, `'b'`, `'l'`, `'r'`, `'tl'`, `'br'`, etc.       | `'tl'`              | `'br'`                         |
 
 ### Graph-Konfigurationsattribute (`graph-*-<id>`)
 Diese Attribute definieren einzelne Graphen im Diagramm. Jeder Graph muss mit einer id identifiziert werden, die mit einem
 ASCII-Buchstaben beginnen muss (z.B. `g1`):
 
-| Attribut            | Beschreibung                                              | Standardwert   | Beispiel                   |
-|---------------------|-----------------------------------------------------------|----------------|----------------------------|
-| `graph-values-<id>` | JSON-Array mit Punkten: `[[x1,y1], [x2,y2], ...]`         | `null`         | `'[[1,2], [2,4], [3,6]]'`  |
-| `graph-expr-<id>`   | Mathematische Funktion (benötigt mathjs): `'f(x)'`        | `null`         | `'x^2'`                    |
-| `graph-start-<id>`  | Startwert für Funktion                                    | `null` (xmin)  | `'0'`                      |
-| `graph-end-<id>`    | Endwert für Funktion                                      | `null` (xmax)  | `'5'`                      |
-| `graph-step-<id>`   | Schrittweite für Funktion                                 | `null` (xsubdelta) | `'0.1'`                |
-| `graph-symbol-<id>` | Symboltyp: `square`, `circle`, `cross`, etc.              | `'line'`       | `'circle'`                 |
-| `graph-name-<id>`   | Name in der Legende                                       | `null`         | `'Quadratfunktion'`        |
+| Attribut            | Beschreibung                                       | Standardwert       | Beispiel                   |
+|---------------------|----------------------------------------------------|--------------------|----------------------------|
+| `graph-values-<id>` | JSON-Array mit Punkten: `[[x1,y1], [x2,y2], ...]`  | `null`             | `'[[1,2], [2,4], [3,6]]'`  |
+| `graph-expr-<id>`   | Mathematische Funktion (benötigt mathjs): `'f(x)'` | `null`             | `'x^2'`                    |
+| `graph-start-<id>`  | Startwert für Funktion                             | `null` (xmin)      | `'0'`                      |
+| `graph-end-<id>`    | Endwert für Funktion                               | `null` (xmax)      | `'5'`                      |
+| `graph-step-<id>`   | Schrittweite für Funktion                          | `null` (xsubdelta) | `'0.1'`                    |
+| `graph-symbol-<id>` | Symboltyp: `square`, `circle`, `cross`, etc.       | `'line'`           | `'circle'`                 |
+| `graph-name-<id>`   | Name in der Legende                                | `null`             | `'Quadratfunktion'`        |
 
 ### CSS-Variablen
 Alle Grid-Attribute können auch als CSS-Variablen verwendet werden. Dazu legt man z.B. in einer CSS-Klasse oder im style-Attribut
@@ -75,12 +75,12 @@ die Variable fest, z.B. `.myclass {--grid-hideaxis: 1 1}`.
 
 Die folgenden CSS-Variablen können für Styling verwendet werden.
 
-| Variable                | Beschreibung                          | Standardwert       | Hinweis                          |
-|-------------------------|---------------------------------------|--------------------|----------------------------------|
-| `--tick-font-size-pt`   | Fontgröße der Ticks in pt             | `12`               | z.B. `---tick-font-size-pt: 10;` |
-| `--graph-<id>-stroke`   | Linienfarbe des Graphen mit ID `<id>` | `'black'`          | z.B. `--g1-stroke: blue;`        |
-| `--graph-<id>-fill`     | Füllfarbe des Graphen mit ID `<id>`   | `'none'`           | z.B. `--g1-fill: red;`           |
-| `--graph-<id>-width`    | Linienbreite des Graphen              | `'1pt'`            | z.B. `--g1-width: 2pt;`          |
+| Variable                | Beschreibung                          | Standardwert  | Hinweis                          |
+|-------------------------|---------------------------------------|---------------|----------------------------------|
+| `--tick-font-size-pt`   | Fontgröße der Ticks in pt             | `12`          | z.B. `---tick-font-size-pt: 10;` |
+| `--graph-<id>-stroke`   | Linienfarbe des Graphen mit ID `<id>` | `'black'`     | z.B. `--g1-stroke: blue;`        |
+| `--graph-<id>-fill`     | Füllfarbe des Graphen mit ID `<id>`   | `'none'`      | z.B. `--g1-fill: red;`           |
+| `--graph-<id>-width`    | Linienbreite des Graphen              | `'1pt'`       | z.B. `--g1-width: 2pt;`          |
 | `--path`                | SVG-Pfad für benutzerdefinierte Symbole | `'m-0.15 -0.15 l0.3 0.3 m-0.3 0 l0.3 -0.3'` | Für Symbol `custompath` anpassbar |
 
 ### CSS `part`-Attribute
