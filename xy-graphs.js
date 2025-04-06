@@ -239,6 +239,18 @@ class ChartGraph {
         }
     }
 
+    getValuesPathD() {
+        if (this.symbol == 'line' && this.valueselement)
+            return this.valueselement.getAttribute('d')
+        return null
+    }
+
+    getExprPathD() {
+        if (this.symbol == 'line' && this.exprelement)
+            return this.exprelement.getAttribute('d')
+        return null
+    }
+
     createGraphElement(values, classname) {
         if (this.symbol == 'line')
             return this.createPathElement(values, classname)
@@ -286,6 +298,7 @@ class ChartGraph {
         }
         path.setAttribute("d", dpath)
         path.setAttribute('part', `graph-${this.id}`)
+        path.setAttribute('id', `graph-${this.id}`)
         path.style['stroke'] = `var(--graph-${this.id}-stroke, ${this.strokecolor})`
         path.style['stroke-width'] = `var(--graph-${this.id}-width, 1.3pt)`
         path.style['fill'] = `var(--graph-${this.id}-fill, none)`
@@ -348,6 +361,10 @@ class ChartGraph {
         return values
     }
 
+    getName(expr=false) {
+        return this.name ? this.name : (this.expr && expr ? this.expr : this.id)
+    }
+
     createLegenditemElement() {
         const div = document.createElement('div')
         div.classList.add('legenditem')
@@ -360,7 +377,7 @@ class ChartGraph {
         div.appendChild(symbolsvg)
         const element = this.createSymbolGroup([[0,0]])
         symbolsvg.appendChild(element)
-        div.innerHTML += `<div>${this.name ? this.name : (this.expr ? this.expr : this.id)}</div>`
+        div.innerHTML += `<div>${this.getName(true)}</div>`
 
         return div
     }
@@ -630,6 +647,7 @@ class ChartContainer {
         this.element = parent.template
         this.errorfunc = errorfunc
         this.colorlist = ['blue','red','green','magenta','cyan','purple','orange']
+        this.graphs = []
 
         this.chartsvg = new ChartSvg(this)
         this.positionLegend()
@@ -640,6 +658,7 @@ class ChartContainer {
             try {
                 graphparams.strokecolor = this.colorlist.length > 0 ? this.colorlist.shift() : 'black'
                 const graph = new ChartGraph(graphparams, this.config.xmin, this.config.xmax, this.config.xsubdelta)
+                this.graphs.push(graph)
                 if (! graph.nolegend)
                     this.chartsvg.appendLegendItem(graph.legenditemelement)
                 this.chartsvg.appendGraph(graph)
@@ -924,12 +943,12 @@ class XYGraphs extends HTMLElement {
 
         this.config = new ChartConfig(this.configobject)
 
-        this.setCSSVariables()
-        const chartcontainer = new ChartContainer(this, (msg) => this.errormessage(msg))
-        chartcontainer.appendGraphPaths(this.graphs)
-        if (chartcontainer.chartsvg.hasEmptyLegendList()) {
+        this.chartcontainer = new ChartContainer(this, (msg) => this.errormessage(msg))
+        this.chartcontainer.appendGraphPaths(this.graphs)
+        if (this.chartcontainer.chartsvg.hasEmptyLegendList()) {
             this.chartelement.style.setProperty('--legendvisibility', 'collapse')
         }
+        this.setCSSVariables()
     }
 
     getCSSVariable(name) {
@@ -946,6 +965,10 @@ class XYGraphs extends HTMLElement {
         this.style.setProperty('--yscale', `${this.config.yscale}`)
         this.style.setProperty('--xrescale', `${1 / this.config.xscale}`)
         this.style.setProperty('--yrescale', `${1 / this.config.yscale}`)
+        for (let graph of this.chartcontainer.graphs) {
+            this.style.setProperty(`--path-d-values-${graph.id}`, graph.getValuesPathD() )
+            this.style.setProperty(`--path-d-expr-${graph.id}`, graph.getExprPathD())
+        }
     }
 
     parseGridAttribute(attr) {
