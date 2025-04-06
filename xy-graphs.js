@@ -54,7 +54,7 @@ xyChartTemplate.innerHTML = `<style>
         transform: scale(1, -1);
     }
     #svg text {
-        transform: scale(calc(1 / var(--xscale, 1)), calc(-1 / var(--yscale, 1)));
+        transform: scale(var(--xrescale, 1), var(--yrescale, -1));
         transform-origin: center;
         transform-box: content-box;
     }
@@ -143,7 +143,7 @@ xyChartTemplate.innerHTML = `<style>
         text-anchor: end;
         dominant-baseline: central;
     }
-    #graphs .usewrapper {
+    .rescale {
         transform: scale(var(--xrescale, 1), var(--yrescale,1));
         transform-box: content-box;
         transform-origin: center;
@@ -272,7 +272,7 @@ class ChartGraph {
             use.setAttribute('y', point.y)
             use.setAttribute('part', `graph-${this.id}`)
             const scalegroup = document.createElementNS("http://www.w3.org/2000/svg", "g")
-            scalegroup.classList.add('usewrapper')
+            scalegroup.classList.add('rescale')
             scalegroup.appendChild(use)
             group.appendChild(scalegroup)
             group.appendChild(scalegroup)
@@ -964,7 +964,7 @@ class XYGraphs extends HTMLElement {
         this.style.setProperty('--xscale', `${this.config.xscale}`)
         this.style.setProperty('--yscale', `${this.config.yscale}`)
         this.style.setProperty('--xrescale', `${1 / this.config.xscale}`)
-        this.style.setProperty('--yrescale', `${1 / this.config.yscale}`)
+        this.style.setProperty('--yrescale', `${-1 / this.config.yscale}`)
         for (let graph of this.chartcontainer.graphs) {
             this.style.setProperty(`--path-d-values-${graph.id}`, graph.getValuesPathD() )
             this.style.setProperty(`--path-d-expr-${graph.id}`, graph.getExprPathD())
